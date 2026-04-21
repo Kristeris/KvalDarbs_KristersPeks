@@ -9,7 +9,7 @@
 </head>
 <body>
  
-<!-- NAVBAR -->
+<!-- NAVIGATION BAR -->
 <nav class="navbar">
     <a class="navbar-brand" th:href="@{/dashboard}">
         <div class="logo-mark">V</div>
@@ -37,7 +37,7 @@
         <p>Aizpildiet veidlapu un pievienojiet nepieciešamos dokumentus</p>
     </div>
  
-    <div th:if="${error}" class="alert alert-error">⚠ <span th:text="${error}"></span></div>
+    <div th:if="${error}" class="alert alert-error">UZMANĪBU <span th:text="${error}"></span></div>
  
     <div class="card">
         <div class="card-header">
@@ -78,7 +78,7 @@
                 <div class="form-group">
                     <label class="form-label">Dokumenti (tirdzniecības vietas plāns, saskaņojumi, u.c.)</label>
                     <div class="file-upload-area" id="dropZone" onclick="document.getElementById('documents').click()">
-                        <div class="file-upload-icon">📎</div>
+                        <div class="file-upload-icon"></div>
                         <div class="file-upload-text">
                             <strong>Nospiediet, lai atlasītu failu</strong> vai velciet šeit<br>
                             <span style="font-size:12px">PDF, DOC, DOCX, JPG, PNG – līdz 10 MB</span>
@@ -114,7 +114,7 @@ function updateFileList(files) {
     for (let i = 0; i < files.length; i++) {
         const div = document.createElement('div');
         div.style.cssText = 'font-size:13px;color:var(--primary);font-weight:600;padding:2px 0';
-        div.textContent = '✓ ' + files[i].name;
+        div.textContent = ' ' + files[i].name;
         display.appendChild(div);
     }
 }

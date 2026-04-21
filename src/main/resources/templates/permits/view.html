@@ -9,7 +9,8 @@
 </head>
 <body>
  
-<!-- NAVBAR -->
+<!-- NAVIGATION BAR -->
+
 <nav class="navbar">
     <a class="navbar-brand" th:href="@{/dashboard}">
         <div class="logo-mark">V</div>
@@ -45,7 +46,9 @@
         </span>
     </div>
  
+
     <!-- STATUS TIMELINE FROM IESNIEGTS TO -->
+
     <div class="card mb-4" style="margin-bottom:1.5rem">
         <div class="card-body">
             <div class="status-timeline">
@@ -83,7 +86,6 @@
  
     <div class="grid-2">
  
-        <!-- LEFT: PERMIT DETAILS -->
         <div class="card">
             <div class="card-header">
                 <h3>Pieteikuma informācija</h3>
@@ -129,19 +131,19 @@
         <!-- RIGHT: DOCUMENT + ADMIN COMMENT -->
         <div style="display:flex;flex-direction:column;gap:1.5rem">
  
-            <!-- DOCUMENTS CARD -->
+            <!-- DOCUMENTS  -->
             <div class="card">
                 <div class="card-header"><h3>Pievienotie dokumenti</h3></div>
                 <div class="card-body">
                     <div th:if="${documentList.empty}" class="empty-state" style="padding:1.5rem">
-                        <div class="icon" style="font-size:2rem">📂</div>
+                        <div class="icon" style="font-size:2rem"></div>
                         <p>Nav pievienotu dokumentu</p>
                     </div>
                     <div th:if="${!documentList.empty}">
                         <div th:each="doc : ${documentList}"
                             style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#faf8f5;border-radius:6px;border:1px solid var(--border);margin-bottom:8px">
                             <div style="display:flex;align-items:center;gap:10px">
-                                <span style="font-size:1.5rem">📄</span>
+                                <span style="font-size:1.5rem"></span>
                                 <div>
                                     <div style="font-weight:600;font-size:14px" th:text="${doc[0]}"></div>
                                     <div class="text-muted">Pievienots kopā ar pieteikumu</div>
@@ -149,7 +151,7 @@
                             </div>
                             <a th:href="@{/permits/{id}/download/{stored}(id=${permit.pId},stored=${doc[1]})}"
                             class="btn btn-outline btn-sm" style="white-space:nowrap">
-                                ⬇ Lejupielādēt
+                                 Lejupielādēt
                             </a>
                         </div>
                     </div>
@@ -173,7 +175,7 @@
  
     <!-- ADMIN ACTION PANEL -->
     <div th:if="${isAdmin}" class="admin-action-panel" style="margin-top:1.5rem">
-        <h4>⚙ Administratora darbības</h4>
+        <h4> Administratora darbības</h4>
         <p class="text-muted" style="margin-bottom:1rem;font-size:13px">
             Pēc statusa maiņas lietotājs automātiski saņems e-pasta paziņojumu.
         </p>

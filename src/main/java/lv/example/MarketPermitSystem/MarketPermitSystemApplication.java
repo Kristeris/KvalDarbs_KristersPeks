@@ -1,0 +1,13 @@
+package lv.example.MarketPermitSystem;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class MarketPermitSystemApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(MarketPermitSystemApplication.class, args);
+	}
+
+}

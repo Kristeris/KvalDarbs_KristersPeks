@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="lv" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrācija – Tirdzniecības Atļauju Sistēma</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .filter-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1.5px solid var(--border);
+            background: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--text-muted);
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .user-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #eef3f8;
+            color: var(--primary);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+ 
+<!-- NAVBAR -->
+<nav class="navbar">
+    <a class="navbar-brand" th:href="@{/admin/dashboard}">
+        <div class="logo-mark">V</div>
+        <div class="brand-text">
+            <strong>Administrācija</strong>
+            Tirdzniecības Atļaujas
+        </div>
+    </a>
+    <ul class="navbar-nav">
+        <li><a th:href="@{/admin/dashboard}" class="active">Visi pieteikumi</a></li>
+        <li><a th:href="@{/dashboard}">Lietotāja skats</a></li>
+        <li>
+            <form th:action="@{/logout}" method="post" style="display:inline">
+                <button type="submit" class="btn-logout">Izrakstīties</button>
+            </form>
+        </li>
+    </ul>
+</nav>
+ 
+<div class="page-wrapper">
+ 
+    <div class="page-header">
+        <h1>Administrācijas panelis</h1>
+        <p>Visu tirdzniecības atļauju pieteikumu pārvaldība</p>
+    </div>
+ 
+    <div th:if="${success}" class="alert alert-success">Labi <span th:text="${success}"></span></div>
+    <div th:if="${error}" class="alert alert-error">UZMANĪBU <span th:text="${error}"></span></div>
+ 
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <div class="stat-number" th:text="${totalCount}">0</div>
+            <div class="stat-label">Kopā</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-number" th:text="${submittedCount}">0</div>
+            <div class="stat-label">Iesniegts</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-number" th:text="${reviewCount}">0</div>
+            <div class="stat-label">Izskatīšanā</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-number" th:text="${approvedCount}">0</div>
+            <div class="stat-label">Apstiprināts</div>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-number" th:text="${rejectedCount}">0</div>
+            <div class="stat-label">Noraidīts</div>
+        </div>
+    </div>
+ 
+    <!-- PERMITS TABLE -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Visi pieteikumi</h2>
+            <div class="filter-bar" id="filterBar">
+                <button class="filter-btn active" onclick="filterTable('ALL', this)">Visi</button>
+                <button class="filter-btn" onclick="filterTable('IESNIEGTS', this)">Iesniegts</button>
+                <button class="filter-btn" onclick="filterTable('IZSKATISANA', this)">Izskatīšanā</button>
+                <button class="filter-btn" onclick="filterTable('PAPILDINAJUMI_NEPIECIESAMI', this)">Papildinājumi</button>
+                <button class="filter-btn" onclick="filterTable('APSTIPRINATS', this)">Apstiprināts</button>
+                <button class="filter-btn" onclick="filterTable('NORAIDITS', this)">Noraidīts</button>
+            </div>
+        </div>
+        <div class="card-body" style="padding:0">
+ 
+            <div th:if="${permits.empty}" class="empty-state">
+                <div class="icon"></div>
+                <h3>Nav pieteikumu</h3>
+                <p>Lietotāji vēl nav iesnieguši nevienu pieteikumu</p>
+            </div>
+ 
+            <div th:if="${!permits.empty}" class="table-wrapper">
+                <table id="permitsTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Lietotājs</th>
+                            <th>Nosaukums</th>
+                            <th>Tirdzniecības vieta</th>
+                            <th>Statuss</th>
+                            <th>Iesniegts</th>
+                            <th>Ātrā darbība</th>
+                            <th>Skatīt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="permit : ${permits}"
+                            th:attr="data-status=${permit.status.name()}">
+                            <td class="text-muted" th:text="${permit.pId}"></td>
+                            <td>
+                                <span class="user-chip">
+                                     <span th:text="${permit.user.username}"></span>
+                                </span>
+                            </td>
+                            <td>
+                                <div style="font-weight:600;font-size:14px" th:text="${permit.title}"></div>
+                                <div class="text-muted" th:if="${permit.adminComment != null}"
+                                     th:text="'Komentārs: ' + ${permit.adminComment}"
+                                     style="font-size:12px;margin-top:2px"></div>
+                            </td>
+                            <td th:text="${permit.tradeLocation}"></td>
+                            <td>
+                                <span th:switch="${permit.status.name()}">
+                                    <span th:case="'IESNIEGTS'" class="badge badge-submitted">Iesniegts</span>
+                                    <span th:case="'IZSKATISANA'" class="badge badge-review">Izskatīšanā</span>
+                                    <span th:case="'PAPILDINAJUMI_NEPIECIESAMI'" class="badge badge-need-more">Papildinājumi</span>
+                                    <span th:case="'APSTIPRINATS'" class="badge badge-approved">Apstiprināts</span>
+                                    <span th:case="'NORAIDITS'" class="badge badge-rejected">Noraidīts</span>
+                                </span>
+                            </td>
+                            <td class="text-muted"
+                                th:text="${#temporals.format(permit.submittedAt, 'dd.MM.yyyy HH:mm')}"></td>
+                            <td>
+                                <form th:action="@{/admin/permits/{id}/status(id=${permit.pId})}"
+                                      method="post"
+                                      style="display:flex;gap:6px;align-items:center">
+                                    <select name="status" class="form-control"
+                                            style="padding:5px 8px;font-size:12px;width:auto;min-width:140px">
+                                        <option th:each="s : ${T(lv.example.MarketPermitSystem.model.enums.PermitStatus).values()}"
+                                                th:value="${s.name()}"
+                                                th:text="${s.displayName}"
+                                                th:selected="${s == permit.status}"></option>
+                                    </select>
+                                    <button type="submit" class="btn btn-primary btn-sm"
+                                            title="Saglabāt un nosūtīt paziņojumu">
+                                        
+                                    </button>
+                                </form>
+                            </td>
+                            <td>
+                                <a th:href="@{/permits/{id}(id=${permit.pId})}"
+                                   class="btn btn-outline btn-sm">Atvērt</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- USERS OVERVIEW BODY-->
+    <div class="card" style="margin-top:1.5rem">
+        <div class="card-header">
+            <h2>Reģistrētie lietotāji</h2>
+            <span class="text-muted" th:text="${users.size()} + ' lietotāji'"></span>
+        </div>
+        <div class="card-body" style="padding:0">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Lietotājvārds</th>
+                            <th>E-pasts</th>
+                            <th>Loma</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="u : ${users}">
+                            <td class="text-muted" th:text="${u.uId}"></td>
+                            <td><strong th:text="${u.username}"></strong></td>
+                            <td th:text="${u.email ?: '—'}"></td>
+                            <td>
+                                <span th:if="${u.authority.title == 'ADMIN'}"
+                                      class="badge badge-approved">Administrators</span>
+                                <span th:if="${u.authority.title == 'USER'}"
+                                      class="badge badge-submitted">Lietotājs</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+ 
+</div>
+ 
+<script>
+function filterTable(status, btn) {
+    // Update active button
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+ 
+    // Filter the rows
+    const rows = document.querySelectorAll('#permitsTable tbody tr');
+    rows.forEach(row => {
+        if (status === 'ALL' || row.dataset.status === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
+ 
+</body>
+</html>

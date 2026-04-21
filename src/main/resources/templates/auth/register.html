@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="lv" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reģistrācija – Tirdzniecības Atļauju Sistēma</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <div class="mark">V</div>
+            <h1>Reģistrēties</h1>
+            <p>Ventspils valstspilsētas pašvaldība</p>
+        </div>
+ 
+        <div th:if="${error}" class="alert alert-error">UZMANĪBU <span th:text="${error}"></span></div>
+ 
+        <form th:action="@{/register}" method="post">
+            <div class="form-group">
+                <label class="form-label">Lietotājvārds <span style="color:var(--danger)">*</span></label>
+                <input type="text" name="username" class="form-control"
+                       placeholder="tikai mazie burti un cipari (3-20 rakstzīmes)"
+                       pattern="[a-z0-9]+" minlength="3" maxlength="20" required autofocus>
+            </div>
+            <div class="form-group">
+                <label class="form-label">E-pasta adrese</label>
+                <input type="email" name="email" class="form-control"
+                       placeholder="epasts@piemers.lv">
+                <span class="text-muted mt-1" style="display:block">
+                    Ieteicams – uz šo adresi tiks sūtīti paziņojumi
+                </span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Parole <span style="color:var(--danger)">*</span></label>
+                <input type="password" name="password" id="password" class="form-control"
+                       placeholder="Vismaz 6 rakstzīmes" minlength="6" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Apstiprināt paroli <span style="color:var(--danger)">*</span></label>
+                <input type="password" name="confirmPassword" id="confirmPassword" class="form-control"
+                       placeholder="Atkārtojiet paroli" required>
+            </div>
+            <button type="submit" class="btn btn-accent w-full" style="justify-content:center; padding:12px;"
+                    onclick="return checkPasswords()">
+                Izveidot kontu
+            </button>
+        </form>
+ 
+        <div class="auth-footer">
+            Jau ir konts? <a th:href="@{/login}">Pieslēgties šeit</a>
+        </div>
+    </div>
+</div>
+<script>
+function checkPasswords() {
+    const p1 = document.getElementById('password').value;
+    const p2 = document.getElementById('confirmPassword').value;
+    if (p1 !== p2) { alert('Paroles nesakrīt!'); return false; }
+    return true;
+}
+</script>
+</body>
+</html>
+ 

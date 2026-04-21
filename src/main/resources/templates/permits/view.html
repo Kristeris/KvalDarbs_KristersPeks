@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="lv" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pieteikums – Tirdzniecības Atļauju Sistēma</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+ 
+<!-- NAVBAR -->
+<nav class="navbar">
+    <a class="navbar-brand" th:href="@{/dashboard}">
+        <div class="logo-mark">V</div>
+        <div class="brand-text">
+            <strong>Tirdzniecības Atļaujas</strong>
+            Ventspils pašvaldība
+        </div>
+    </a>
+    <ul class="navbar-nav">
+        <li><a th:href="@{/dashboard}">← Atpakaļ uz sarakstu</a></li>
+        <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/dashboard}">Administrācija</a></li>
+        <li>
+            <form th:action="@{/logout}" method="post" style="display:inline">
+                <button type="submit" class="btn-logout">Izrakstīties</button>
+            </form>
+        </li>
+    </ul>
+</nav>
+ 
+<div class="page-wrapper">
+ 
+    <div class="page-header flex justify-between items-center">
+        <div>
+            <h1 th:text="${permit.title}"></h1>
+            <p>Pieteikuma Nr. <strong th:text="${permit.pId}"></strong> · Detaļas un statuss</p>
+        </div>
+        <span th:switch="${permit.status.name()}">
+            <span th:case="'IESNIEGTS'" class="badge badge-submitted" style="font-size:14px;padding:8px 16px">Iesniegts</span>
+            <span th:case="'IZSKATISANA'" class="badge badge-review" style="font-size:14px;padding:8px 16px">Izskatīšanā</span>
+            <span th:case="'PAPILDINAJUMI_NEPIECIESAMI'" class="badge badge-need-more" style="font-size:14px;padding:8px 16px">Papildinājumi nepiec.</span>
+            <span th:case="'APSTIPRINATS'" class="badge badge-approved" style="font-size:14px;padding:8px 16px">Apstiprināts ✓</span>
+            <span th:case="'NORAIDITS'" class="badge badge-rejected" style="font-size:14px;padding:8px 16px">Noraidīts</span>
+        </span>
+    </div>
+ 
+    <!-- STATUS TIMELINE FROM IESNIEGTS TO -->
+    <div class="card mb-4" style="margin-bottom:1.5rem">
+        <div class="card-body">
+            <div class="status-timeline">
+                <div class="timeline-step">
+                    <div class="timeline-dot done">✓</div>
+                    <div class="timeline-label">Iesniegts</div>
+                </div>
+                <div class="timeline-step">
+                    <div class="timeline-dot"
+                         th:classappend="${permit.status.name() == 'IZSKATISANA' or permit.status.name() == 'APSTIPRINATS' or permit.status.name() == 'NORAIDITS' or permit.status.name() == 'PAPILDINAJUMI_NEPIECIESAMI'} ? 'active' : ''">
+                        2
+                    </div>
+                    <div class="timeline-label">Izskatīšanā</div>
+                </div>
+                <div class="timeline-step">
+                    <div class="timeline-dot"
+                         th:classappend="${permit.status.name() == 'PAPILDINAJUMI_NEPIECIESAMI'} ? 'active' : ''">
+                        !
+                    </div>
+                    <div class="timeline-label">Papildinājumi</div>
+                </div>
+                <div class="timeline-step">
+                    <div class="timeline-dot"
+                         th:classappend="${permit.status.name() == 'APSTIPRINATS'} ? 'done' : (${permit.status.name() == 'NORAIDITS'} ? 'active' : '')">
+                        <span th:if="${permit.status.name() == 'APSTIPRINATS'}">✓</span>
+                        <span th:if="${permit.status.name() != 'APSTIPRINATS'}">4</span>
+                    </div>
+                    <div class="timeline-label"
+                         th:text="${permit.status.name() == 'NORAIDITS'} ? 'Noraidīts' : 'Apstiprināts'">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+    <div class="grid-2">
+ 
+        <!-- LEFT: PERMIT DETAILS -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Pieteikuma informācija</h3>
+            </div>
+            <div class="card-body">
+                <div class="detail-row">
+                    <div class="detail-label">Nosaukums</div>
+                    <div class="detail-value" th:text="${permit.title}"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Apraksts</div>
+                    <div class="detail-value" th:text="${permit.description ?: '—'}"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Tirdzniecības vieta</div>
+                    <div class="detail-value" th:text="${permit.tradeLocation}"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Sākuma datums</div>
+                    <div class="detail-value" th:text="${permit.tradeStartDate}"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Beigu datums</div>
+                    <div class="detail-value" th:text="${permit.tradeEndDate}"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Iesniedzējs</div>
+                    <div class="detail-value" th:text="${permit.user.username}"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Iesniegšanas laiks</div>
+                    <div class="detail-value"
+                         th:text="${#temporals.format(permit.submittedAt, 'dd.MM.yyyy HH:mm')}"></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Pēdējās izmaiņas</div>
+                    <div class="detail-value"
+                         th:text="${#temporals.format(permit.updatedAt, 'dd.MM.yyyy HH:mm')}"></div>
+                </div>
+            </div>
+        </div>
+ 
+        <!-- RIGHT: DOCUMENT + ADMIN COMMENT -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+ 
+            <!-- DOCUMENT CARD -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Pievienotie dokumenti</h3>
+                </div>
+                <div class="card-body">
+                    <div th:if="${permit.documentFileName != null}"
+                         style="display:flex;align-items:center;gap:12px;padding:12px;background:#faf8f5;border-radius:6px;border:1px solid var(--border)">
+                        <span style="font-size:2rem"></span>
+                        <div>
+                            <div style="font-weight:600;font-size:14px" th:text="${permit.documentFileName}"></div>
+                            <div class="text-muted">Pievienots kopā ar pieteikumu</div>
+                        </div>
+                    </div>
+                    <div th:if="${permit.documentFileName == null}" class="empty-state" style="padding:1.5rem">
+                        <div class="icon" style="font-size:2rem"></div>
+                        <p>Nav pievienotu dokumentu</p>
+                    </div>
+                </div>
+            </div>
+ 
+            <!-- ADMIN COMMENT CARD -->
+            <div class="card" th:if="${permit.adminComment != null and !permit.adminComment.isEmpty()}">
+                <div class="card-header">
+                    <h3>Pašvaldības komentārs</h3>
+                </div>
+                <div class="card-body">
+                    <div style="background:#fff9e6;border-left:4px solid var(--accent);padding:12px 16px;border-radius:4px">
+                        <p th:text="${permit.adminComment}" style="font-size:14px;color:var(--text)"></p>
+                    </div>
+                </div>
+            </div>
+ 
+        </div>
+    </div>
+ 
+    <!-- ADMIN ACTION PANEL -->
+    <div th:if="${isAdmin}" class="admin-action-panel" style="margin-top:1.5rem">
+        <h4>⚙ Administratora darbības</h4>
+        <p class="text-muted" style="margin-bottom:1rem;font-size:13px">
+            Pēc statusa maiņas lietotājs automātiski saņems e-pasta paziņojumu.
+        </p>
+        <form th:action="@{/admin/permits/{id}/status(id=${permit.pId})}" method="post">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Jauns statuss</label>
+                    <select name="status" class="form-control">
+                        <option th:each="s : ${statuses}"
+                                th:value="${s.name()}"
+                                th:text="${s.displayName}"
+                                th:selected="${s == permit.status}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Komentārs lietotājam</label>
+                    <input type="text" name="adminComment" class="form-control"
+                           th:value="${permit.adminComment}"
+                           placeholder="Piezīme, kas tiks nosūtīta e-pastā">
+                </div>
+            </div>
+            <div style="display:flex;gap:0.75rem">
+                <button type="submit" class="btn btn-primary"> Saglabāt un informēt lietotāju</button>
+                <a th:href="@{/admin/dashboard}" class="btn btn-outline">Atpakaļ uz sarakstu</a>
+            </div>
+        </form>
+    </div>
+ 
+</div>
+</body>
+</html>

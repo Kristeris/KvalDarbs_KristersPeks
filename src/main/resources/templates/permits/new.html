@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="lv" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jauns pieteikums – Tirdzniecības Atļauju Sistēma</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+ 
+<!-- NAVBAR -->
+<nav class="navbar">
+    <a class="navbar-brand" th:href="@{/dashboard}">
+        <div class="logo-mark">V</div>
+        <div class="brand-text">
+            <strong>Tirdzniecības Atļaujas</strong>
+            Ventspils pašvaldība
+        </div>
+    </a>
+    <ul class="navbar-nav">
+        <li><a th:href="@{/dashboard}">Mans profils</a></li>
+        <li><a th:href="@{/permits/new}" class="active">+ Jauns pieteikums</a></li>
+        <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/dashboard}">Administrācija</a></li>
+        <li>
+            <form th:action="@{/logout}" method="post" style="display:inline">
+                <button type="submit" class="btn-logout">Izrakstīties</button>
+            </form>
+        </li>
+    </ul>
+</nav>
+ 
+<div class="page-wrapper">
+ 
+    <div class="page-header">
+        <h1>Jauns tirdzniecības atļaujas pieteikums</h1>
+        <p>Aizpildiet veidlapu un pievienojiet nepieciešamos dokumentus</p>
+    </div>
+ 
+    <div th:if="${error}" class="alert alert-error">⚠ <span th:text="${error}"></span></div>
+ 
+    <div class="card">
+        <div class="card-header">
+            <h3>Pieteikuma informācija</h3>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/permits/new}" method="post" enctype="multipart/form-data">
+ 
+                <div class="form-group">
+                    <label class="form-label">Pieteikuma nosaukums <span style="color:var(--danger)">*</span></label>
+                    <input type="text" name="title" class="form-control"
+                           placeholder="piem. Pārtikas tirdzniecība Lielā iela 5" required>
+                </div>
+ 
+                <div class="form-group">
+                    <label class="form-label">Tirdzniecības vietas apraksts</label>
+                    <textarea name="description" class="form-control"
+                              placeholder="Aprakstiet plānoto tirdzniecību – produktus, veidu, u.c."></textarea>
+                </div>
+ 
+                <div class="form-group">
+                    <label class="form-label">Tirdzniecības adrese / vieta <span style="color:var(--danger)">*</span></label>
+                    <input type="text" name="tradeLocation" class="form-control"
+                           placeholder="piem. Lielā iela 5, Ventspils" required>
+                </div>
+ 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Tirdzniecības sākuma datums <span style="color:var(--danger)">*</span></label>
+                        <input type="date" name="tradeStartDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tirdzniecības beigu datums <span style="color:var(--danger)">*</span></label>
+                        <input type="date" name="tradeEndDate" class="form-control" required>
+                    </div>
+                </div>
+ 
+                <div class="form-group">
+                    <label class="form-label">Dokumenti (tirdzniecības vietas plāns, saskaņojumi, u.c.)</label>
+                    <div class="file-upload-area" id="dropZone" onclick="document.getElementById('document').click()">
+                        <div class="file-upload-icon">📎</div>
+                        <div class="file-upload-text">
+                            <strong>Nospiediet, lai atlasītu failu</strong> vai velciet šeit<br>
+                            <span style="font-size:12px">PDF, DOC, DOCX, JPG, PNG – līdz 10 MB</span>
+                        </div>
+                        <div id="fileNameDisplay" style="display:none; margin-top:10px; font-weight:600; color:var(--primary)"></div>
+                    </div>
+                    <input type="file" id="document" name="document"
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                </div>
+ 
+                <div class="alert alert-info" style="margin-top:0.5rem">
+                    INFO: Pēc pieteikuma iesniegšanas Jūs saņemsiet apstiprinājuma e-pastu.
+                    Pieteikums tiks izskatīts 5 darba dienu laikā.
+                </div>
+ 
+                <div class="flex gap-3 mt-4">
+                    <button type="submit" class="btn btn-accent">Iesniegt pieteikumu</button>
+                    <a th:href="@{/dashboard}" class="btn btn-outline">Atcelt</a>
+                </div>
+ 
+            </form>
+        </div>
+    </div>
+</div>
+ 
+<script>
+const input = document.getElementById('document');
+const display = document.getElementById('fileNameDisplay');
+const zone = document.getElementById('dropZone');
+ 
+input.addEventListener('change', () => {
+    if (input.files.length > 0) {
+        display.textContent = ' ' + input.files[0].name;
+        display.style.display = 'block';
+    }
+});
+ 
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragging'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragging'));
+zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragging');
+    if (e.dataTransfer.files.length > 0) {
+        input.files = e.dataTransfer.files;
+        display.textContent = ' ' + e.dataTransfer.files[0].name;
+        display.style.display = 'block';
+    }
+});
+</script>
+</body>
+</html>

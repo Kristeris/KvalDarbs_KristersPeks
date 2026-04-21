@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="lv" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mans profils – Tirdzniecības Atļauju Sistēma</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+ 
+<!-- NAVBAR -->
+<nav class="navbar">
+    <a class="navbar-brand" th:href="@{/dashboard}">
+        <div class="logo-mark">V</div>
+        <div class="brand-text">
+            <strong>Tirdzniecības Atļaujas</strong>
+            Ventspils pašvaldība
+        </div>
+    </a>
+    <ul class="navbar-nav">
+        <li><a th:href="@{/dashboard}" class="active">Mans profils</a></li>
+        <li><a th:href="@{/permits/new}">+ Jauns pieteikums</a></li>
+        <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/dashboard}">Administrācija</a></li>
+        <li>
+            <form th:action="@{/logout}" method="post" style="display:inline">
+                <button type="submit" class="btn-logout">Izrakstīties</button>
+            </form>
+        </li>
+    </ul>
+</nav>
+ 
+<div class="page-wrapper">
+ 
+    <!-- ALERTS -->
+    <div th:if="${success}" class="alert alert-success">✓ <span th:text="${success}"></span></div>
+    <div th:if="${error}" class="alert alert-error">⚠ <span th:text="${error}"></span></div>
+ 
+    <!-- PAGE HEADER -->
+    <div class="page-header flex justify-between items-center">
+        <div>
+            <h1>Sveiks, <span th:text="${user.username}"></span>!</h1>
+            <p>Šeit varat iesniegt un sekot saviem tirdzniecības atļauju pieteikumiem</p>
+        </div>
+        <a th:href="@{/permits/new}" class="btn btn-accent">
+            + Iesniegt jaunu pieteikumu
+        </a>
+    </div>
+ 
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <div class="stat-number" th:text="${countSubmitted}">0</div>
+            <div class="stat-label">Iesniegts</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-number" th:text="${countInReview}">0</div>
+            <div class="stat-label">Izskatīšanā</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-number" th:text="${countApproved}">0</div>
+            <div class="stat-label">Apstiprināts</div>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-number" th:text="${countRejected}">0</div>
+            <div class="stat-label">Noraidīts</div>
+        </div>
+    </div>
+ 
+    <!-- PERMITS TABLE -->
+    <div class="card">
+        <div class="card-header">
+            <h2>Mani pieteikumi</h2>
+            <span class="text-muted" th:text="${permits.size()} + ' pieteikumi'"></span>
+        </div>
+        <div class="card-body" style="padding:0">
+ 
+            <div th:if="${permits.empty}" class="empty-state">
+                <div class="icon"></div>
+                <h3>Nav iesniegtu pieteikumu</h3>
+                <p>Nospiediet "+ Iesniegt jaunu pieteikumu", lai sāktu</p>
+                <a th:href="@{/permits/new}" class="btn btn-primary mt-4">Iesniegt pirmo pieteikumu</a>
+            </div>
+ 
+            <div th:if="${!permits.empty}" class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nosaukums</th>
+                            <th>Tirdzniecības vieta</th>
+                            <th>Periods</th>
+                            <th>Statuss</th>
+                            <th>Iesniegts</th>
+                            <th>Darbības</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="permit : ${permits}">
+                            <td class="text-muted" th:text="${permit.pId}"></td>
+                            <td><strong th:text="${permit.title}"></strong></td>
+                            <td th:text="${permit.tradeLocation}"></td>
+                            <td>
+                                <span th:text="${permit.tradeStartDate}"></span> –
+                                <span th:text="${permit.tradeEndDate}"></span>
+                            </td>
+                            <td>
+                                <span th:switch="${permit.status.name()}">
+                                    <span th:case="'IESNIEGTS'" class="badge badge-submitted">Iesniegts</span>
+                                    <span th:case="'IZSKATISANA'" class="badge badge-review">Izskatīšanā</span>
+                                    <span th:case="'PAPILDINAJUMI_NEPIECIESAMI'" class="badge badge-need-more">Papildinājumi nepiec.</span>
+                                    <span th:case="'APSTIPRINATS'" class="badge badge-approved">Apstiprināts</span>
+                                    <span th:case="'NORAIDITS'" class="badge badge-rejected">Noraidīts</span>
+                                </span>
+                            </td>
+                            <td class="text-muted" th:text="${#temporals.format(permit.submittedAt, 'dd.MM.yyyy HH:mm')}"></td>
+                            <td>
+                                <a th:href="@{/permits/{id}(id=${permit.pId})}"
+                                   class="btn btn-outline btn-sm">Skatīt</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+ 
+</div>
+</body>
+</html>
+ 

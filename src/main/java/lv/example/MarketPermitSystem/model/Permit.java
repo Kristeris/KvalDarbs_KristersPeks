@@ -1,6 +1,8 @@
 package lv.example.MarketPermitSystem.model;
  
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -68,12 +70,9 @@ public class Permit {
     @Column(name = "AdminComment")
     private String adminComment;
  
-    @Column(name = "DocumentFileName")
-    private String documentFileName;
- 
-    @Column(name = "DocumentFilePath")
-    private String documentFilePath;
- 
+    @Column(name = "DocumentFiles", length = 2000)
+    private String documentFiles;
+
     @ManyToOne
     @JoinColumn(name = "UId")
     private MyUser user;
@@ -88,7 +87,18 @@ public class Permit {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
- 
+
+
+    public List<String[]> getDocumentList() {
+        List<String[]> docs = new ArrayList<>();
+        if (documentFiles == null || documentFiles.isEmpty()) return docs;
+        for (String entry : documentFiles.split(",")) {
+            String[] parts = entry.split("::");
+            if (parts.length == 2) docs.add(parts);
+        }
+        return docs;
+    }
+
     public Permit(String title, String description, String tradeLocation,
                   String tradeStartDate, String tradeEndDate, MyUser user) {
         this.title = title;

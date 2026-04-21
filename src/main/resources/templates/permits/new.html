@@ -77,16 +77,15 @@
  
                 <div class="form-group">
                     <label class="form-label">Dokumenti (tirdzniecības vietas plāns, saskaņojumi, u.c.)</label>
-                    <div class="file-upload-area" id="dropZone" onclick="document.getElementById('document').click()">
+                    <div class="file-upload-area" id="dropZone" onclick="document.getElementById('documents').click()">
                         <div class="file-upload-icon">📎</div>
                         <div class="file-upload-text">
                             <strong>Nospiediet, lai atlasītu failu</strong> vai velciet šeit<br>
                             <span style="font-size:12px">PDF, DOC, DOCX, JPG, PNG – līdz 10 MB</span>
                         </div>
-                        <div id="fileNameDisplay" style="display:none; margin-top:10px; font-weight:600; color:var(--primary)"></div>
+                        <div id="fileListDisplay" style="margin-top:10px;text-align:left"></div>
                     </div>
-                    <input type="file" id="document" name="document"
-                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                    <input type="file" id="documents" name="documents" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
                 </div>
  
                 <div class="alert alert-info" style="margin-top:0.5rem">
@@ -109,13 +108,19 @@ const input = document.getElementById('document');
 const display = document.getElementById('fileNameDisplay');
 const zone = document.getElementById('dropZone');
  
-input.addEventListener('change', () => {
-    if (input.files.length > 0) {
-        display.textContent = ' ' + input.files[0].name;
-        display.style.display = 'block';
+function updateFileList(files) {
+    display.innerHTML = '';
+    if (files.length === 0) return;
+    for (let i = 0; i < files.length; i++) {
+        const div = document.createElement('div');
+        div.style.cssText = 'font-size:13px;color:var(--primary);font-weight:600;padding:2px 0';
+        div.textContent = '✓ ' + files[i].name;
+        display.appendChild(div);
     }
-});
- 
+}
+
+input.addEventListener('change', () => updateFileList(input.files));
+
 zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragging'); });
 zone.addEventListener('dragleave', () => zone.classList.remove('dragging'));
 zone.addEventListener('drop', e => {
@@ -123,8 +128,7 @@ zone.addEventListener('drop', e => {
     zone.classList.remove('dragging');
     if (e.dataTransfer.files.length > 0) {
         input.files = e.dataTransfer.files;
-        display.textContent = ' ' + e.dataTransfer.files[0].name;
-        display.style.display = 'block';
+        updateFileList(e.dataTransfer.files);
     }
 });
 </script>

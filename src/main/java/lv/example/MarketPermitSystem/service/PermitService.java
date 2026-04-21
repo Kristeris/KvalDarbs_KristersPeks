@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
  
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
  
@@ -28,13 +29,21 @@ public class PermitService {
  
     public Permit createPermit(String title, String description, String tradeLocation,
                                String tradeStartDate, String tradeEndDate,
-                               MultipartFile document, MyUser user) throws IOException {
+                               List<MultipartFile> documents, MyUser user) throws IOException {
         Permit permit = new Permit(title, description, tradeLocation, tradeStartDate, tradeEndDate, user);
  
-        if (document != null && !document.isEmpty()) {
-            String fileName = storeFile(document);
-            permit.setDocumentFileName(document.getOriginalFilename());
-            permit.setDocumentFilePath(fileName);
+        if (documents != null && !documents.isEmpty()) {
+            List<String> entries = new ArrayList<>();
+            for (MultipartFile doc : documents) {
+                if (doc != null && !doc.isEmpty()) {
+                    String storedName = storeFile(doc);
+                    String origName = doc.getOriginalFilename();
+                    entries.add(origName + "::" + storedName);
+                }
+            }
+            if (!entries.isEmpty()) {
+                permit.setDocumentFiles(String.join(",", entries));
+            }
         }
  
         Permit saved = permitRepository.save(permit);
@@ -52,7 +61,12 @@ public class PermitService {
         Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
         return uniqueName;
     }
- 
+
+
+    public Path getFilePath(String storedName) {
+        return Paths.get(uploadDir).resolve(storedName);
+    }
+
     public List<Permit> getUserPermits(MyUser user) {
         return permitRepository.findByUserOrderBySubmittedAtDesc(user);
     }

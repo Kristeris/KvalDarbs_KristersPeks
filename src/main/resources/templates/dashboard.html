@@ -6,6 +6,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mans profils – Tirdzniecības Atļauju Sistēma</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .process-steps { display: flex; flex-direction: column; gap: 0; }
+        .process-step {
+            display: flex;
+            gap: 1.25rem;
+            padding: 1.25rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .process-step:last-child { border-bottom: none; }
+        .step-number {
+            width: 36px; height: 36px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 15px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .step-content h4 {
+            font-family: 'Playfair Display', serif;
+            color: var(--primary);
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        .step-content p, .step-content ul {
+            font-size: 14px;
+            color: var(--text);
+            line-height: 1.7;
+        }
+        .step-content ul { padding-left: 1.2rem; }
+        .step-content ul li { margin-bottom: 4px; }
+        .bank-info {
+            background: #f0ece4;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-top: 10px;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        .download-iesniegums {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 1rem;
+            transition: background 0.2s;
+        }
+        .download-iesniegums:hover { background: var(--primary-light); }
+        .footer {
+            background: var(--primary);
+            color: rgba(255,255,255,0.85);
+            margin-top: 3rem;
+            padding: 2rem 0 1.5rem;
+        }
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        .footer h4 {
+            color: white;
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+        .footer p, .footer a {
+            font-size: 13px;
+            line-height: 1.8;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+        }
+        .footer a:hover { color: var(--accent-light); }
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.15);
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+        }
+        @media (max-width: 768px) {
+            .footer-inner { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
  
@@ -124,8 +218,94 @@
             </div>
         </div>
     </div>
+    
+    <!-- PAKALPOJUMA PROCESS -->
+    <div class="card" style="margin-bottom:2rem">
+        <div class="card-header">
+            <h2>Pakalpojuma saņemšanas process</h2>
+        </div>
+        <div class="card-body">
+            <div class="process-steps">
+
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Iesnieguma iesniegšana</h4>
+                        <p>Ielu tirdzniecības atļaujas saņemšanai tirdzniecības dalībniekam Ventspils valstspilsētas pašvaldības iestādes "Ventspils domes administrācija" Vispārējā nodaļā jāiesniedz iesniegums un tam klāt jāpievieno šādi dokumenti:</p>
+                        <ul>
+                            <li><strong>a)</strong> saskaņojums ar nekustamā īpašuma īpašnieku vai tiesisko valdītāju par paredzēto tirdzniecību, ja tirdzniecība tiks veikta minētajā nekustamajā īpašumā;</li>
+                            <li><strong>b)</strong> saskaņojums ar pasākuma rīkotāju par tirdzniecības veikšanu pasākuma norises laikā un vietā (ja attiecināms);</li>
+                            <li><strong>c)</strong> tirdzniecības vietas novietnes skice, kuru ir saskaņojis nekustamā īpašuma īpašnieks vai tiesiskais valdītājs;</li>
+                            <li><strong>d)</strong> krāsainas tirdzniecības vietas aprīkojuma vizualizācijas vai foto fiksācijas ar norādītiem gabarītizmēriem un materiālu aprakstu;</li>
+                            <li><strong>e)</strong> pārvietojamā mazumtirdzniecības punkta kustības maršruts un laiks (ja tirdzniecība paredzēta vairākās publiskās vietās).</li>
+                        </ul>
+                        <a th:href="@{/files/Iesniegums_ielu_tirdzniecibai.docx}" class="download-iesniegums">
+                            ⬇ Lejupielādēt iesnieguma veidlapu (.docx)
+                        </a>
+                    </div>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Pakalpojuma apmaksa</h4>
+                        <p>Nodevas apmērs tirdzniecības veidiem noteikts Ventspils pilsētas domes 2014. gada 20. jūnija saistošajos noteikumos Nr. 7 "Par pašvaldības nodevām Ventspils pilsētā".</p>
+                        <p style="margin-top:8px">Samaksu var veikt bezskaidras naudas norēķinos uz sekojošiem rekvizītiem:</p>
+                        <div class="bank-info">
+                            <strong>Saņēmējs:</strong> Ventspils valstspilsētas pašvaldība<br>
+                            <strong>Reģistrācijas numurs:</strong> 40900038010<br>
+                            <strong>Banka:</strong> AS "Luminor Bank"<br>
+                            <strong>Bankas kods:</strong> NDEALV2XXXX<br>
+                            <strong>Konta numurs:</strong> LV57RIKO0002930064402<br>
+                            <strong>Maksājuma mērķis:</strong> ielu tirdzniecības vietas adrese un laika periods
+                        </div>
+                    </div>
+                </div>
+
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Pakalpojuma saņemšana</h4>
+                        <p>Ielu tirdzniecības atļauju saņem:</p>
+                        <ul>
+                            <li>klātienē Ventspils valstspilsētas pašvaldības iestādes "Ventspils domes administrācija" Ekonomikas un iepirkumu nodaļā,</li>
+                            <li>pa pastu uz iesniegumā norādīto adresi,</li>
+                            <li>vai uz elektronisko pastu ar drošu e-parakstu.</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
  
 </div>
+
+<footer class="footer">
+    <div class="footer-inner">
+        <div>
+            <h4>Ventspils domes administrācija</h4>
+            <p>
+                Ventspils valstspilsētas pašvaldības iestāde<br>
+                "Ventspils domes administrācija"<br>
+                Reģistrācijas numurs: 90000051970
+            </p>
+        </div>
+        <div>
+            <h4>Ekonomikas un iepirkumu nodaļa</h4>
+            <p>
+                Tālrunis: <a href="tel:63601191">63601191</a><br>
+                E-pasts: <a href="mailto:ekonomika@ventspils.lv">ekonomika@ventspils.lv</a><br>
+                E-adrese: ekonomika@90000051970
+            </p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <div style="max-width:1200px;margin:0 auto;padding:0 1.5rem">
+            © 2026 Ventspils valstspilsētas pašvaldība · Tirdzniecības Atļauju Sistēma
+        </div>
+    </div>
+</footer>
 </body>
 </html>
  

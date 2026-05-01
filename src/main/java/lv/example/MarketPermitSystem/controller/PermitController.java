@@ -1,10 +1,9 @@
 package lv.example.MarketPermitSystem.controller;
  
-import lv.example.MarketPermitSystem.model.MyUser;
-import lv.example.MarketPermitSystem.model.Permit;
-import lv.example.MarketPermitSystem.model.enums.PermitStatus;
-import lv.example.MarketPermitSystem.service.PermitService;
-import lv.example.MarketPermitSystem.service.UserService;
+import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -14,13 +13,18 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.net.MalformedURLException;
-import java.nio.file.Path;
-import java.util.List;
+import lv.example.MarketPermitSystem.model.MyUser;
+import lv.example.MarketPermitSystem.model.Permit;
+import lv.example.MarketPermitSystem.model.enums.PermitStatus;
+import lv.example.MarketPermitSystem.service.PermitService;
+import lv.example.MarketPermitSystem.service.UserService;
  
 @Controller
 public class PermitController {
@@ -75,7 +79,56 @@ public class PermitController {
         }
         return "redirect:/dashboard";
     }
+
+    @GetMapping("/permits/{id}/edit")
+    public String editPermitPage(@PathVariable("id") long id,
+                                 @AuthenticationPrincipal UserDetails userDetails,
+                                 Model model) {
+        Permit permit = permitService.getPermitById(id);
+        MyUser user = userService.findByUsername(userDetails.getUsername());
  
+        // Only the owner may edit
+        if (permit.getUser().getUId() != user.getUId()) {
+            return "redirect:/dashboard";
+        }
+ 
+        // Guard: only editable in allowed statuses
+        if (permit.getStatus() != PermitStatus.IESNIEGTS
+                && permit.getStatus() != PermitStatus.PAPILDINAJUMI_NEPIECIESAMI) {
+            return "redirect:/permits/" + id;
+        }
+ 
+        model.addAttribute("permit", permit);
+        model.addAttribute("documentList", permit.getDocumentList());
+        return "permits/edit";
+    }
+ 
+    @PostMapping("/permits/{id}/edit")
+    public String editPermit(@PathVariable("id") long id,
+                             @AuthenticationPrincipal UserDetails userDetails,
+                             @RequestParam("title") String title,
+                             @RequestParam("description") String description,
+                             @RequestParam("tradeLocation") String tradeLocation,
+                             @RequestParam("tradeStartDate") String tradeStartDate,
+                             @RequestParam("tradeEndDate") String tradeEndDate,
+                             @RequestParam(value = "documents", required = false) List<MultipartFile> documents,
+                             @RequestParam(value = "removeDocuments", required = false) List<String> removeDocuments,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            MyUser user = userService.findByUsername(userDetails.getUsername());
+            permitService.updatePermit(id, title, description, tradeLocation,
+                    tradeStartDate, tradeEndDate, documents, removeDocuments, user);
+            redirectAttributes.addFlashAttribute("success", "Pieteikums veiksmīgi atjaunināts!");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", "Kļūda: " + e.getMessage());
+            return "redirect:/permits/" + id + "/edit";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Kļūda: " + e.getMessage());
+            return "redirect:/permits/" + id + "/edit";
+        }
+        return "redirect:/permits/" + id;
+    }
+
     @GetMapping("/permits/{id}")
     public String viewPermit(@PathVariable("id") long id,
                              @AuthenticationPrincipal UserDetails userDetails,
@@ -89,10 +142,14 @@ public class PermitController {
         if (!isAdmin && permit.getUser().getUId() != user.getUId()) {
             return "redirect:/dashboard";
         }
- 
+        boolean canEdit = !isAdmin
+                && (permit.getStatus() == PermitStatus.IESNIEGTS
+                    || permit.getStatus() == PermitStatus.PAPILDINAJUMI_NEPIECIESAMI);
+        
         model.addAttribute("permit", permit);
         model.addAttribute("statuses", PermitStatus.values());
         model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute("canEdit", canEdit);
         model.addAttribute("documentList", permit.getDocumentList());
         return "permits/view";
     }

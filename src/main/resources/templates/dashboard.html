@@ -208,9 +208,15 @@
                                 </span>
                             </td>
                             <td class="text-muted" th:text="${#temporals.format(permit.submittedAt, 'dd.MM.yyyy HH:mm')}"></td>
-                            <td>
+                            <td style="white-space:nowrap">
                                 <a th:href="@{/permits/{id}(id=${permit.pId})}"
                                    class="btn btn-outline btn-sm">Skatīt</a>
+                                
+                                <!-- Edit button: only shown when status allows editing -->
+                                <a th:if="${permit.status.name() == 'IESNIEGTS' or permit.status.name() == 'PAPILDINAJUMI_NEPIECIESAMI'}"
+                                   th:href="@{/permits/{id}/edit(id=${permit.pId})}"
+                                   class="btn btn-accent btn-sm"
+                                   style="margin-left:4px">&#9998; Labot</a>
                             </td>
                         </tr>
                     </tbody>

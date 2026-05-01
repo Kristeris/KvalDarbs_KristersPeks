@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="lv" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rediģēt pieteikumu - Tirdzniecības Atļauju Sistēma</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .edit-notice {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: #fff9e6;
+            border: 1px solid #e8c84a;
+            border-left: 4px solid var(--accent);
+            border-radius: 6px;
+            padding: 14px 16px;
+            margin-bottom: 1.5rem;
+            font-size: 14px;
+            color: #6b4e00;
+        }
+        .edit-notice .notice-icon { font-size: 1.3rem; flex-shrink: 0; }
+        .edit-notice strong { display: block; margin-bottom: 2px; color: #4a3500; }
+    </style>
+</head>
+<body>
+ 
+<!-- NAVIGATION BAR -->
+<nav class="navbar">
+    <a class="navbar-brand" th:href="@{/dashboard}">
+        <div class="logo-mark">V</div>
+        <div class="brand-text">
+            <strong>Tirdzniecības Atļaujas</strong>
+            Ventspils pašvaldība
+        </div>
+    </a>
+    <ul class="navbar-nav">
+        <li><a th:href="@{/dashboard}">Mans profils</a></li>
+        <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/dashboard}">Administrācija</a></li>
+        <li>
+            <form th:action="@{/logout}" method="post" style="display:inline">
+                <button type="submit" class="btn-logout">Izrakstīties</button>
+            </form>
+        </li>
+    </ul>
+</nav>
+ 
+<div class="page-wrapper">
+ 
+    <div class="page-header">
+        <h1>Rediģēt pieteikumu</h1>
+        <p>Pieteikums Nr. <strong th:text="${permit.pId}"></strong> - <span th:text="${permit.title}"></span></p>
+    </div>
+ 
+    <div th:if="${error}" class="alert alert-error">UZMANĪBU <span th:text="${error}"></span></div>
+ 
+    <!-- Notice banner changes based on current status -->
+    <div class="edit-notice" th:if="${permit.status.name() == 'IESNIEGTS'}">
+        <span class="notice-icon">&#9432;</span>
+        <div>
+            <strong>Pieteikums ir iesniegts un vēl nav izskatīšanā</strong>
+            Varat labot visus laukus. Pēc saglabāšanas statuss paliks "Iesniegts".
+        </div>
+    </div>
+    <div class="edit-notice" th:if="${permit.status.name() == 'PAPILDINAJUMI_NEPIECIESAMI'}">
+        <span class="notice-icon">&#9888;</span>
+        <div>
+            <strong>Nepieciešami papildinājumi</strong>
+            Lūdzu, izlabojiet pieteikumu atbilstoši pašvaldības komentāram un iesniedziet atkārtoti.
+            Pēc saglabāšanas statuss tiks atjaunināts uz "Iesniegts".
+        </div>
+    </div>
+ 
+    
+    <div class="card mb-4" style="margin-bottom:1.5rem"
+         th:if="${permit.adminComment != null and !permit.adminComment.isEmpty()}">
+        <div class="card-header">
+            <h3>Pašvaldības komentārs</h3>
+        </div>
+        <div class="card-body">
+            <div style="background:#fff9e6;border-left:4px solid var(--accent);padding:12px 16px;border-radius:4px">
+                <p th:text="${permit.adminComment}" style="font-size:14px;color:var(--text)"></p>
+            </div>
+        </div>
+    </div>
+ 
+    <div class="card">
+        <div class="card-header">
+            <h3>Pieteikuma informācija</h3>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/permits/{id}/edit(id=${permit.pId})}" method="post" enctype="multipart/form-data">
+ 
+                <div class="form-group">
+                    <label class="form-label">Pieteikuma nosaukums <span style="color:var(--danger)">*</span></label>
+                    <input type="text" name="title" class="form-control"
+                           th:value="${permit.title}"
+                           placeholder="piem. Pārtikas tirdzniecība Lielā iela 5" required>
+                </div>
+ 
+                <div class="form-group">
+                    <label class="form-label">Tirdzniecības vietas apraksts</label>
+                    <textarea name="description" class="form-control"
+                              placeholder="Aprakstiet plānoto tirdzniecību – produktus, veidu, u.c."
+                              th:text="${permit.description}"></textarea>
+                </div>
+ 
+                <div class="form-group">
+                    <label class="form-label">Tirdzniecības adrese / vieta <span style="color:var(--danger)">*</span></label>
+                    <input type="text" name="tradeLocation" class="form-control"
+                           th:value="${permit.tradeLocation}"
+                           placeholder="piem. Lielā iela 5, Ventspils" required>
+                </div>
+ 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Tirdzniecības sākuma datums <span style="color:var(--danger)">*</span></label>
+                        <input type="date" name="tradeStartDate" id="tradeStartDate" class="form-control"
+                               th:value="${permit.tradeStartDate}"
+                               th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tirdzniecības beigu datums <span style="color:var(--danger)">*</span></label>
+                        <input type="date" name="tradeEndDate" id="tradeEndDate" class="form-control"
+                               th:value="${permit.tradeEndDate}"
+                               th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
+                    </div>
+                </div>
+ 
+                
+                <div class="form-group" th:if="${!documentList.empty}">
+                    <label class="form-label">Esošie dokumenti</label>
+                    <div th:each="doc : ${documentList}"
+                         style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#faf8f5;border-radius:6px;border:1px solid var(--border);margin-bottom:8px">
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <span style="font-size:1.3rem">&#128196;</span>
+                            <span style="font-weight:600;font-size:14px" th:text="${doc[0]}"></span>
+                        </div>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--danger);cursor:pointer">
+                            <input type="checkbox" name="removeDocuments" th:value="${doc[1]}">
+                            Noņemt
+                        </label>
+                    </div>
+                </div>
+ 
+                <div class="form-group">
+                    <label class="form-label">Pievienot jaunus dokumentus</label>
+                    <div class="file-upload-area" id="dropZone" onclick="document.getElementById('documents').click()">
+                        <div class="file-upload-icon">&#128193;</div>
+                        <div class="file-upload-text">
+                            <strong>Nospiediet, lai atlasītu failu</strong> vai velciet šeit<br>
+                            <span style="font-size:12px">PDF, DOC, DOCX, JPG, PNG – līdz 10 MB</span>
+                        </div>
+                        <div id="fileListDisplay" style="margin-top:10px;text-align:left"></div>
+                    </div>
+                    <input type="file" id="documents" name="documents" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
+                </div>
+ 
+                <div class="flex gap-3 mt-4">
+                    <button type="submit" class="btn btn-accent">&#10003; Saglabāt izmaiņas</button>
+                    <a th:href="@{/permits/{id}(id=${permit.pId})}" class="btn btn-outline">Atcelt</a>
+                </div>
+ 
+            </form>
+        </div>
+    </div>
+</div>
+ 
+</body>
+</html>
+ 

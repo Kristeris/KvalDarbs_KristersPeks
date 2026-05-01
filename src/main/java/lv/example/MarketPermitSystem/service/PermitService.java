@@ -88,6 +88,95 @@ public class PermitService {
         emailService.sendPermitSubmittedEmail(user, saved);
         return saved;
     }
+
+    public Permit updatePermit(long permitId, String title, String description, String tradeLocation,
+                               String tradeStartDate, String tradeEndDate,
+                               List<MultipartFile> newDocuments,
+                               List<String> removeDocuments,
+                               MyUser requestingUser) throws IOException {
+                
+        Permit permit = getPermitById(permitId);
+ 
+        // Only the owner may edit
+        if (permit.getUser().getUId() != requestingUser.getUId()) {
+            throw new IllegalArgumentException("Jums nav tiesību rediģēt šo pieteikumu.");
+        }
+ 
+        // Only editable in these two statuses
+        if (permit.getStatus() != PermitStatus.IESNIEGTS
+                && permit.getStatus() != PermitStatus.PAPILDINAJUMI_NEPIECIESAMI) {
+            throw new IllegalArgumentException("Šo pieteikumu vairs nevar rediģēt.");
+        }
+ 
+        LocalDate today = LocalDate.now();
+        LocalDate startDate;
+        LocalDate endDate;
+ 
+        try {
+            startDate = LocalDate.parse(tradeStartDate);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Nepareizs sākuma datuma formāts.");
+        }
+ 
+        try {
+            endDate = LocalDate.parse(tradeEndDate);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Nepareizs beigu datuma formāts.");
+        }
+ 
+        if (startDate.isBefore(today)) {
+            throw new IllegalArgumentException(
+                "Tirdzniecības sākuma datums nevar būt pagātnē.");
+        }
+ 
+        if (endDate.isBefore(today)) {
+            throw new IllegalArgumentException(
+                "Tirdzniecības beigu datums nevar būt pagātnē.");
+        }
+ 
+        if (endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException(
+                "Tirdzniecības beigu datums nevar būt pirms sākuma datuma.");
+        }
+ 
+        permit.setTitle(title);
+        permit.setDescription(description);
+        permit.setTradeLocation(tradeLocation);
+        permit.setTradeStartDate(tradeStartDate);
+        permit.setTradeEndDate(tradeEndDate);
+ 
+        // Handle document removal
+        List<String> currentEntries = new ArrayList<>();
+        if (permit.getDocumentFiles() != null && !permit.getDocumentFiles().isEmpty()) {
+            for (String entry : permit.getDocumentFiles().split(",")) {
+                String[] parts = entry.split("::");
+                if (parts.length == 2 && (removeDocuments == null || !removeDocuments.contains(parts[1]))) {
+                    currentEntries.add(entry);
+                }
+            }
+        }
+ 
+        // Handle new document uploads
+        if (newDocuments != null && !newDocuments.isEmpty()) {
+            for (MultipartFile doc : newDocuments) {
+                if (doc != null && !doc.isEmpty()) {
+                    String storedName = storeFile(doc);
+                    currentEntries.add(doc.getOriginalFilename() + "::" + storedName);
+                }
+            }
+        }
+ 
+        permit.setDocumentFiles(currentEntries.isEmpty() ? null : String.join(",", currentEntries));
+ 
+        // If it was waiting for additions, reset to IESNIEGTS so admin sees the update
+        if (permit.getStatus() == PermitStatus.PAPILDINAJUMI_NEPIECIESAMI) {
+            permit.setStatus(PermitStatus.IESNIEGTS);
+        }
+ 
+        Permit saved = permitRepository.save(permit);
+        emailService.sendPermitSubmittedEmail(requestingUser, saved);
+        return saved;
+    }
  
     private String storeFile(MultipartFile file) throws IOException {
         Path uploadPath = Paths.get(uploadDir);
@@ -133,3 +222,4 @@ public class PermitService {
         return permitRepository.countByStatus(status);
     }
 }
+

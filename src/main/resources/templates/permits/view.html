@@ -37,17 +37,35 @@
             <h1 th:text="${permit.title}"></h1>
             <p>Pieteikuma Nr. <strong th:text="${permit.pId}"></strong> · Detaļas un statuss</p>
         </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;justify-content:flex-end">
+            <span th:switch="${permit.status.name()}">
         <span th:switch="${permit.status.name()}">
+                <span th:case="'IESNIEGTS'" class="badge badge-submitted" style="font-size:14px;padding:8px 16px">Iesniegts</span>
             <span th:case="'IESNIEGTS'" class="badge badge-submitted" style="font-size:14px;padding:8px 16px">Iesniegts</span>
+                <span th:case="'IZSKATISANA'" class="badge badge-review" style="font-size:14px;padding:8px 16px">Izskatīšanā</span>
             <span th:case="'IZSKATISANA'" class="badge badge-review" style="font-size:14px;padding:8px 16px">Izskatīšanā</span>
+                <span th:case="'PAPILDINAJUMI_NEPIECIESAMI'" class="badge badge-need-more" style="font-size:14px;padding:8px 16px">Papildinājumi nepiec.</span>
             <span th:case="'PAPILDINAJUMI_NEPIECIESAMI'" class="badge badge-need-more" style="font-size:14px;padding:8px 16px">Papildinājumi nepiec.</span>
+                <span th:case="'APSTIPRINATS'" class="badge badge-approved" style="font-size:14px;padding:8px 16px">Apstiprināts ✓</span>
             <span th:case="'APSTIPRINATS'" class="badge badge-approved" style="font-size:14px;padding:8px 16px">Apstiprināts ✓</span>
+                <span th:case="'NORAIDITS'" class="badge badge-rejected" style="font-size:14px;padding:8px 16px">Noraidīts</span>
             <span th:case="'NORAIDITS'" class="badge badge-rejected" style="font-size:14px;padding:8px 16px">Noraidīts</span>
+            </span>
         </span>
+            <!-- Edit button: only for owner when status allows it -->
+            <a th:if="${canEdit}"
+               th:href="@{/permits/{id}/edit(id=${permit.pId})}"
+               class="btn btn-accent btn-sm">
+                 Rediģēt
+            </a>
+        </div>
     </div>
- 
 
-    <!-- STATUS TIMELINE FROM IESNIEGTS TO -->
+    <div th:if="${permit.status.name() == 'PAPILDINAJUMI_NEPIECIESAMI' and !isAdmin}"
+         class="alert alert-error" style="border-left:4px solid var(--danger)">
+        &#9888; Pašvaldība lūdz papildināt pieteikumu. Lūdzu, nospiediet <strong>Rediģēt</strong>, lai veiktu labojumus.
+    </div>
+
 
     <div class="card mb-4" style="margin-bottom:1.5rem">
         <div class="card-body">
@@ -128,7 +146,6 @@
             </div>
         </div>
  
-        <!-- RIGHT: DOCUMENT + ADMIN COMMENT -->
         <div style="display:flex;flex-direction:column;gap:1.5rem">
  
             <!-- DOCUMENTS  -->

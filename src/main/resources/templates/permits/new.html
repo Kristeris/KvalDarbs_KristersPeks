@@ -67,11 +67,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Tirdzniecības sākuma datums <span style="color:var(--danger)">*</span></label>
-                        <input type="date" name="tradeStartDate" class="form-control" required>
+                        <input type="date" name="tradeStartDate" id="tradeStartDate" class="form-control" th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Tirdzniecības beigu datums <span style="color:var(--danger)">*</span></label>
-                        <input type="date" name="tradeEndDate" class="form-control" required>
+                        <input type="date" name="tradeEndDate" id="tradeEndDate" class="form-control" th:min="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
                     </div>
                 </div>
  
@@ -103,34 +103,6 @@
     </div>
 </div>
  
-<script>
-const input = document.getElementById('document');
-const display = document.getElementById('fileNameDisplay');
-const zone = document.getElementById('dropZone');
- 
-function updateFileList(files) {
-    display.innerHTML = '';
-    if (files.length === 0) return;
-    for (let i = 0; i < files.length; i++) {
-        const div = document.createElement('div');
-        div.style.cssText = 'font-size:13px;color:var(--primary);font-weight:600;padding:2px 0';
-        div.textContent = ' ' + files[i].name;
-        display.appendChild(div);
-    }
-}
-
-input.addEventListener('change', () => updateFileList(input.files));
-
-zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragging'); });
-zone.addEventListener('dragleave', () => zone.classList.remove('dragging'));
-zone.addEventListener('drop', e => {
-    e.preventDefault();
-    zone.classList.remove('dragging');
-    if (e.dataTransfer.files.length > 0) {
-        input.files = e.dataTransfer.files;
-        updateFileList(e.dataTransfer.files);
-    }
-});
-</script>
+<script th:src="@{/js/permit-form.js}"></script>
 </body>
 </html>

@@ -1,19 +1,25 @@
 package lv.example.MarketPermitSystem.service;
  
-import lv.example.MarketPermitSystem.model.MyUser;
-import lv.example.MarketPermitSystem.model.Permit;
-import lv.example.MarketPermitSystem.model.enums.PermitStatus;
-import lv.example.MarketPermitSystem.repo.PermitRepository;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
- 
-import java.io.IOException;
-import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+
+import lv.example.MarketPermitSystem.model.MyUser;
+import lv.example.MarketPermitSystem.model.Permit;
+import lv.example.MarketPermitSystem.model.enums.PermitStatus;
+import lv.example.MarketPermitSystem.repo.PermitRepository;
  
 @Service
 public class PermitService {
@@ -30,6 +36,38 @@ public class PermitService {
     public Permit createPermit(String title, String description, String tradeLocation,
                                String tradeStartDate, String tradeEndDate,
                                List<MultipartFile> documents, MyUser user) throws IOException {
+        
+        LocalDate today = LocalDate.now();
+ 
+        LocalDate startDate;
+        LocalDate endDate;
+ 
+        try {
+            startDate = LocalDate.parse(tradeStartDate);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Nepareizs sākuma datuma formāts.");
+        }
+ 
+        try {
+            endDate = LocalDate.parse(tradeEndDate);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Nepareizs beigu datuma formāts.");
+        }
+ 
+        if (startDate.isBefore(today)) {
+            throw new IllegalArgumentException(
+                "Tirdzniecības sākuma datums nevar būt pagātnē. Lūdzu, izvēlieties šodienas vai nākotnes datumu.");
+        }
+ 
+        if (endDate.isBefore(today)) {
+            throw new IllegalArgumentException(
+                "Tirdzniecības beigu datums nevar būt pagātnē. Lūdzu, izvēlieties šodienas vai nākotnes datumu.");
+        }
+ 
+        if (endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException(
+                "Tirdzniecības beigu datums nevar būt pirms sākuma datuma.");
+        }
         Permit permit = new Permit(title, description, tradeLocation, tradeStartDate, tradeEndDate, user);
  
         if (documents != null && !documents.isEmpty()) {

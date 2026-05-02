@@ -119,14 +119,25 @@ public class PermitController {
             permitService.updatePermit(id, title, description, tradeLocation,
                     tradeStartDate, tradeEndDate, documents, removeDocuments, user);
             redirectAttributes.addFlashAttribute("success", "Pieteikums veiksmīgi atjaunināts!");
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("error", "Kļūda: " + e.getMessage());
-            return "redirect:/permits/" + id + "/edit";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Kļūda: " + e.getMessage());
             return "redirect:/permits/" + id + "/edit";
         }
         return "redirect:/permits/" + id;
+    }
+
+    @PostMapping("/permits/{id}/delete")
+    public String deletePermit(@PathVariable("id") long id,
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            MyUser user = userService.findByUsername(userDetails.getUsername());
+            permitService.deletePermit(id, user);
+            redirectAttributes.addFlashAttribute("success", "Pieteikums veiksmīgi dzēsts.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", "Kļūda: " + e.getMessage());
+        }
+        return "redirect:/dashboard";
     }
 
     @GetMapping("/permits/{id}")
@@ -146,10 +157,14 @@ public class PermitController {
                 && (permit.getStatus() == PermitStatus.IESNIEGTS
                     || permit.getStatus() == PermitStatus.PAPILDINAJUMI_NEPIECIESAMI);
         
+        boolean canDelete = !isAdmin && permit.getStatus() == PermitStatus.IESNIEGTS;
+
+
         model.addAttribute("permit", permit);
         model.addAttribute("statuses", PermitStatus.values());
         model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("canEdit", canEdit);
+        model.addAttribute("canDelete", canDelete);
         model.addAttribute("documentList", permit.getDocumentList());
         return "permits/view";
     }

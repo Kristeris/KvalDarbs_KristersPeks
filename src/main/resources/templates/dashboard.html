@@ -61,6 +61,39 @@
             transition: background 0.2s;
         }
         .download-iesniegums:hover { background: var(--primary-light); }
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-backdrop.open { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+            text-align: center;
+        }
+        .modal-icon { font-size: 2.8rem; margin-bottom: 0.75rem; }
+        .modal h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--primary);
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .modal p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        .modal-actions { display: flex; gap: 0.75rem; justify-content: center; }
         .footer {
             background: var(--primary);
             color: rgba(255,255,255,0.85);
@@ -217,6 +250,15 @@
                                    th:href="@{/permits/{id}/edit(id=${permit.pId})}"
                                    class="btn btn-accent btn-sm"
                                    style="margin-left:4px">&#9998; Labot</a>
+                                
+
+                                <button th:if="${permit.status.name() == 'IESNIEGTS'}"
+                                        type="button"
+                                        class="btn btn-danger btn-sm"
+                                        style="margin-left:4px"
+                                        th:onclick="|openDeleteModal(${permit.pId}, '[[${permit.title}]]')|">
+                                    &#128465;
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -287,6 +329,27 @@
  
 </div>
 
+<div id="deleteModal" class="modal-backdrop"
+     onclick="if(event.target===this) this.classList.remove('open')">
+    <div class="modal">
+        <div class="modal-icon">&#128465;</div>
+        <h3>Dzēst pieteikumu?</h3>
+        <p id="deleteModalText">
+            Vai tiešām vēlaties dzēst šo pieteikumu?
+            Šo darbību nevar atcelt.
+        </p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-outline"
+                    onclick="document.getElementById('deleteModal').classList.remove('open')">
+                Atcelt
+            </button>
+            <form id="deleteModalForm" method="post" style="display:inline">
+                <button type="submit" class="btn btn-danger">&#128465; Jā, dzēst</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <footer class="footer">
     <div class="footer-inner">
         <div>
@@ -312,6 +375,14 @@
         </div>
     </div>
 </footer>
+<script>
+function openDeleteModal(permitId, title) {
+    document.getElementById('deleteModalText').textContent =
+        'Vai tiešām vēlaties dzēst pieteikumu "' + title + '"? Šo darbību nevar atcelt — pieteikums un visi pievienotie dokumenti tiks neatgriezeniski dzēsti.';
+    document.getElementById('deleteModalForm').action = '/permits/' + permitId + '/delete';
+    document.getElementById('deleteModal').classList.add('open');
+}
+</script>
 </body>
 </html>
  

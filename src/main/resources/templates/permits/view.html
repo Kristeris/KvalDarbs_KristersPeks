@@ -6,6 +6,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pieteikums – Tirdzniecības Atļauju Sistēma</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* Delete confirmation modal */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-backdrop.open { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+            text-align: center;
+        }
+        .modal-icon {
+            font-size: 2.8rem;
+            margin-bottom: 0.75rem;
+        }
+        .modal h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--primary);
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        .modal p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+    </style>
 </head>
 <body>
  
@@ -39,25 +82,31 @@
         </div>
         <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;justify-content:flex-end">
             <span th:switch="${permit.status.name()}">
-        <span th:switch="${permit.status.name()}">
+        
                 <span th:case="'IESNIEGTS'" class="badge badge-submitted" style="font-size:14px;padding:8px 16px">Iesniegts</span>
-            <span th:case="'IESNIEGTS'" class="badge badge-submitted" style="font-size:14px;padding:8px 16px">Iesniegts</span>
+            
                 <span th:case="'IZSKATISANA'" class="badge badge-review" style="font-size:14px;padding:8px 16px">Izskatīšanā</span>
-            <span th:case="'IZSKATISANA'" class="badge badge-review" style="font-size:14px;padding:8px 16px">Izskatīšanā</span>
+            
                 <span th:case="'PAPILDINAJUMI_NEPIECIESAMI'" class="badge badge-need-more" style="font-size:14px;padding:8px 16px">Papildinājumi nepiec.</span>
-            <span th:case="'PAPILDINAJUMI_NEPIECIESAMI'" class="badge badge-need-more" style="font-size:14px;padding:8px 16px">Papildinājumi nepiec.</span>
+            
                 <span th:case="'APSTIPRINATS'" class="badge badge-approved" style="font-size:14px;padding:8px 16px">Apstiprināts ✓</span>
-            <span th:case="'APSTIPRINATS'" class="badge badge-approved" style="font-size:14px;padding:8px 16px">Apstiprināts ✓</span>
+            
                 <span th:case="'NORAIDITS'" class="badge badge-rejected" style="font-size:14px;padding:8px 16px">Noraidīts</span>
-            <span th:case="'NORAIDITS'" class="badge badge-rejected" style="font-size:14px;padding:8px 16px">Noraidīts</span>
+            
             </span>
-        </span>
+        
             <!-- Edit button: only for owner when status allows it -->
             <a th:if="${canEdit}"
                th:href="@{/permits/{id}/edit(id=${permit.pId})}"
-               class="btn btn-accent btn-sm">
-                 Rediģēt
+               class="btn btn-accent btn-sm"> Rediģēt
             </a>
+            <button th:if="${canDelete}"
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    onclick="document.getElementById('deleteModal').classList.add('open')">
+                &#128465; Dzēst
+                 Rediģēt
+            </button>
         </div>
     </div>
 
@@ -222,5 +271,28 @@
     </div>
  
 </div>
+<!-- DELETE CONFIRMATION -->
+<div id="deleteModal" class="modal-backdrop" th:if="${canDelete}"
+     onclick="if(event.target===this) this.classList.remove('open')">
+    <div class="modal">
+        <div class="modal-icon">&#128465;</div>
+        <h3>Dzēst pieteikumu?</h3>
+        <p>
+            Vai tiešām vēlaties dzēst pieteikumu
+            <strong th:text='"' + ${permit.title} + '"'></strong>?
+            Šo darbību nevar atcelt — pieteikums un visi pievienotie dokumenti tiks neatgriezeniski dzēsti.
+        </p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-outline"
+                    onclick="document.getElementById('deleteModal').classList.remove('open')">
+                Atcelt
+            </button>
+            <form th:action="@{/permits/{id}/delete(id=${permit.pId})}" method="post" style="display:inline">
+                <button type="submit" class="btn btn-danger">&#128465; Jā, dzēst</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

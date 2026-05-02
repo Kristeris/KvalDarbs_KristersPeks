@@ -75,8 +75,7 @@ public class PermitService {
             for (MultipartFile doc : documents) {
                 if (doc != null && !doc.isEmpty()) {
                     String storedName = storeFile(doc);
-                    String origName = doc.getOriginalFilename();
-                    entries.add(origName + "::" + storedName);
+                    entries.add(doc.getOriginalFilename() + "::" + storedName);
                 }
             }
             if (!entries.isEmpty()) {
@@ -176,6 +175,36 @@ public class PermitService {
         Permit saved = permitRepository.save(permit);
         emailService.sendPermitSubmittedEmail(requestingUser, saved);
         return saved;
+    }
+
+    public void deletePermit(long permitId, MyUser requestingUser) {
+        Permit permit = getPermitById(permitId);
+ 
+        if (permit.getUser().getUId() != requestingUser.getUId()) {
+            throw new IllegalArgumentException("Jums nav tiesību dzēst šo pieteikumu.");
+        }
+ 
+        if (permit.getStatus() != PermitStatus.IESNIEGTS) {
+            throw new IllegalArgumentException("Šo pieteikumu vairs nevar dzēst — statuss ir \"" +
+                    permit.getStatus().getDisplayName() + "\".");
+        }
+ 
+        // Delete uploaded files from disk
+        if (permit.getDocumentFiles() != null && !permit.getDocumentFiles().isEmpty()) {
+            for (String entry : permit.getDocumentFiles().split(",")) {
+                String[] parts = entry.split("::");
+                if (parts.length == 2) {
+                    try {
+                        Path filePath = Paths.get(uploadDir).resolve(parts[1]);
+                        Files.deleteIfExists(filePath);
+                    } catch (IOException e) {
+                        System.err.println("Neizdevās dzēst failu: " + parts[1] + " — " + e.getMessage());
+                    }
+                }
+            }
+        }
+ 
+        permitRepository.delete(permit);
     }
  
     private String storeFile(MultipartFile file) throws IOException {

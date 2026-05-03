@@ -1,16 +1,21 @@
 package lv.example.MarketPermitSystem.service;
  
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import lv.example.MarketPermitSystem.model.MyAuthority;
 import lv.example.MarketPermitSystem.model.MyUser;
 import lv.example.MarketPermitSystem.repo.MyAuthorityRepository;
 import lv.example.MarketPermitSystem.repo.MyUserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
- 
-import java.util.List;
  
 @Service
 public class UserService implements UserDetailsService {
@@ -26,9 +31,12 @@ public class UserService implements UserDetailsService {
  
     @Autowired
     private EmailService emailService;
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
  
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.debug("Autentifikācijas mēģinājums: '{}'", username);
         MyUser user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Lietotājs nav atrasts: " + username));
         return new org.springframework.security.core.userdetails.User(
@@ -39,6 +47,7 @@ public class UserService implements UserDetailsService {
     }
  
     public MyUser registerUser(String username, String rawPassword, String email) {
+        log.info("Reģistrācijas mēģinājums: '{}'", username);
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Lietotājvārds jau aizņemts");
         }
@@ -50,6 +59,7 @@ public class UserService implements UserDetailsService {
         MyUser user = new MyUser(username, passwordEncoder.encode(rawPassword), email, userRole);
         MyUser saved = userRepository.save(user);
         emailService.sendRegistrationEmail(saved);
+        log.info("Lietotājs '{}' veiksmīgi reģistrēts", username);
         return saved;
     }
  

@@ -1,17 +1,21 @@
 package lv.example.MarketPermitSystem.service;
  
-import lv.example.MarketPermitSystem.model.Permit;
-import lv.example.MarketPermitSystem.model.MyUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+
+import lv.example.MarketPermitSystem.model.MyUser;
+import lv.example.MarketPermitSystem.model.Permit;
  
 @Service
 public class EmailService {
  
     @Autowired
     private JavaMailSender mailSender;
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
  
     private void sendEmail(String to, String subject, String body) {
         try {
@@ -21,8 +25,10 @@ public class EmailService {
             message.setText(body);
             message.setFrom("kristers1906@gmail.com");
             mailSender.send(message);
+            log.info("E-pasts nosūtīts uz '{}': '{}'", to, subject);
         } catch (Exception e) {
             System.err.println("E-pasta sūtīšana neizdevās: " + e.getMessage());
+            log.error("E-pasta sūtīšana neizdevās uz '{}': {}", to, e.getMessage());
         }
     }
  

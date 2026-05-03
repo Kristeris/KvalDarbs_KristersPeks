@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ import lv.example.MarketPermitSystem.repo.PermitRepository;
  
 @Service
 public class PermitService {
+
+    private static final Logger log = LoggerFactory.getLogger(PermitService.class);
  
     @Autowired
     private PermitRepository permitRepository;
@@ -42,6 +46,8 @@ public class PermitService {
         LocalDate startDate;
         LocalDate endDate;
  
+        log.info("Lietotājs '{}' veido jaunu pieteikumu: '{}'", user.getUsername(), title);
+
         try {
             startDate = LocalDate.parse(tradeStartDate);
         } catch (DateTimeParseException e) {
@@ -84,6 +90,7 @@ public class PermitService {
         }
  
         Permit saved = permitRepository.save(permit);
+        log.info("Pieteikums #{} veiksmīgi izveidots lietotājam '{}'", saved.getPId(), user.getUsername());
         emailService.sendPermitSubmittedEmail(user, saved);
         return saved;
     }
@@ -95,6 +102,8 @@ public class PermitService {
                                MyUser requestingUser) throws IOException {
                 
         Permit permit = getPermitById(permitId);
+
+        log.info("Lietotājs '{}' rediģē pieteikumu #{}", requestingUser.getUsername(), permitId);
  
         // Only the owner may edit
         if (permit.getUser().getUId() != requestingUser.getUId()) {
@@ -174,11 +183,14 @@ public class PermitService {
  
         Permit saved = permitRepository.save(permit);
         emailService.sendPermitSubmittedEmail(requestingUser, saved);
+        log.info("Pieteikums #{} atjaunināts, statuss: {}", saved.getPId(), saved.getStatus());
         return saved;
     }
 
     public void deletePermit(long permitId, MyUser requestingUser) {
         Permit permit = getPermitById(permitId);
+
+        log.warn("Lietotājs '{}' dzēš pieteikumu #{}", requestingUser.getUsername(), permitId);
  
         if (permit.getUser().getUId() != requestingUser.getUId()) {
             throw new IllegalArgumentException("Jums nav tiesību dzēst šo pieteikumu.");
@@ -205,6 +217,7 @@ public class PermitService {
         }
  
         permitRepository.delete(permit);
+        log.info("Pieteikums #{} dzēsts", permitId);
     }
  
     private String storeFile(MultipartFile file) throws IOException {
@@ -238,12 +251,15 @@ public class PermitService {
  
     public Permit updateStatus(long permitId, PermitStatus newStatus, String adminComment) {
         Permit permit = getPermitById(permitId);
+        log.info("Admins maina pieteikuma #{} statusu uz '{}'", permitId, newStatus);
         permit.setStatus(newStatus);
         if (adminComment != null && !adminComment.isEmpty()) {
             permit.setAdminComment(adminComment);
         }
         Permit saved = permitRepository.save(permit);
         emailService.sendStatusChangedEmail(permit.getUser(), saved);
+        log.info("Pieteikums #{} statuss mainīts, e-pasts nosūtīts lietotājam '{}'",
+                saved.getPId(), permit.getUser().getUsername());
         return saved;
     }
  

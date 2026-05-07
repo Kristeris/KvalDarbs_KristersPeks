@@ -13,6 +13,11 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,6 +32,7 @@ import lv.example.MarketPermitSystem.repo.PermitRepository;
 public class PermitService {
 
     private static final Logger log = LoggerFactory.getLogger(PermitService.class);
+    private static final int PAGE_SIZE = 10;
  
     @Autowired
     private PermitRepository permitRepository;
@@ -235,7 +241,22 @@ public class PermitService {
     public Path getFilePath(String storedName) {
         return Paths.get(uploadDir).resolve(storedName);
     }
-
+    // Pagination metodes
+ 
+    //Atgriež vienu lapas pieteikumus konkrētam lietotājam.
+    public Page<Permit> getUserPermitsPaged(MyUser user, int page) {
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+        return permitRepository.findByUserOrderBySubmittedAtDesc(user, pageable);
+    }
+ 
+    
+    //Atgriež vienu lapas pieteikumus admin skatam.
+    public Page<Permit> getAllPermitsPaged(int page) {
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+        return permitRepository.findAllByOrderBySubmittedAtDesc(pageable);
+    }
+ 
+    // Esošās metodes (statistikai un citur)
     public List<Permit> getUserPermits(MyUser user) {
         return permitRepository.findByUserOrderBySubmittedAtDesc(user);
     }

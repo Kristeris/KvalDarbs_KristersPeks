@@ -1,10 +1,9 @@
 package lv.example.MarketPermitSystem.controller;
  
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -35,10 +34,16 @@ public class AdminController {
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
  
     @GetMapping("/dashboard")
-    public String adminDashboard(Model model) {
-        List<Permit> permits = permitService.getAllPermits();
-        model.addAttribute("permits", permits);
-        model.addAttribute("totalCount", permits.size());
+    public String adminDashboard(@RequestParam(value = "page", defaultValue = "0") int page,Model model) {
+        // Paginēts saraksts
+        Page<Permit> permitPage = permitService.getAllPermitsPaged(page);
+        model.addAttribute("permits", permitPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", permitPage.getTotalPages());
+        model.addAttribute("totalElements", permitPage.getTotalElements());
+ 
+        // Statistika — par VISIEM pieteikumiem
+        model.addAttribute("totalCount", permitService.getAllPermits().size());
         model.addAttribute("submittedCount", permitService.countByStatus(PermitStatus.IESNIEGTS));
         model.addAttribute("reviewCount", permitService.countByStatus(PermitStatus.IZSKATISANA));
         model.addAttribute("approvedCount", permitService.countByStatus(PermitStatus.APSTIPRINATS));
@@ -51,6 +56,7 @@ public class AdminController {
     public String updateStatus(@PathVariable("id") long id,
                            @RequestParam("status") String status,
                            @RequestParam(value = "adminComment", required = false) String adminComment,
+                           @RequestParam(value = "page", defaultValue = "0") int page,
                            RedirectAttributes redirectAttributes) {
         log.info("Admin maina pieteikuma #{} statusu uz '{}', komentārs: '{}'",
             id, status, adminComment);
@@ -61,6 +67,6 @@ public class AdminController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Kļūda: " + e.getMessage());
         }
-        return "redirect:/admin/dashboard";
+        return "redirect:/admin/dashboard?page=" + page;
     }
 }

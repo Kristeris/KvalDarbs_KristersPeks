@@ -129,6 +129,52 @@
             font-size: 12px;
             color: rgba(255,255,255,0.5);
         }
+        /* PAGINATION */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 1.25rem;
+            border-top: 1px solid var(--border);
+        }
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+            padding: 0 10px;
+            border-radius: 5px;
+            border: 1.5px solid var(--border);
+            background: white;
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.15s;
+            cursor: pointer;
+        }
+        .pagination-btn:hover:not(.disabled):not(.active) {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .pagination-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            pointer-events: none;
+        }
+        .pagination-btn.disabled {
+            opacity: 0.35;
+            pointer-events: none;
+        }
+        .pagination-info {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin: 0 0.5rem;
+        }
         @media (max-width: 768px) {
             .footer-inner { grid-template-columns: 1fr; }
         }
@@ -198,11 +244,12 @@
     <div class="card">
         <div class="card-header">
             <h2>Mani pieteikumi</h2>
-            <span class="text-muted" th:text="${permits.size()} + ' pieteikumi'"></span>
+            <span class="text-muted"
+                  th:text="${totalElements} + ' pieteikumi kopā'"></span>
         </div>
         <div class="card-body" style="padding:0">
  
-            <div th:if="${permits.empty}" class="empty-state">
+            <div th:if="${permits.empty and currentPage == 0}" class="empty-state">
                 <div class="icon"></div>
                 <h3>Nav iesniegtu pieteikumu</h3>
                 <p>Nospiediet "+ Iesniegt jaunu pieteikumu", lai sāktu</p>
@@ -263,6 +310,34 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+                        <!-- PAGINATION -->
+            <div th:if="${totalPages > 1}" class="pagination">
+                <!-- Iepriekšējā lapa -->
+                <a th:href="@{/dashboard(page=${currentPage - 1})}"
+                   th:classappend="${currentPage == 0} ? 'pagination-btn disabled' : 'pagination-btn'"
+                   class="pagination-btn">&#8592;</a>
+ 
+                <!-- Lapas numuri -->
+                <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                    <!-- Vienmēr rāda pirmo, pēdējo un 2 ap pašreizējo -->
+                    <a th:if="${i == 0 or i == totalPages - 1 or (i >= currentPage - 2 and i <= currentPage + 2)}"
+                       th:href="@{/dashboard(page=${i})}"
+                       th:text="${i + 1}"
+                       th:classappend="${i == currentPage} ? ' active' : ''"
+                       class="pagination-btn"></a>
+                    <!-- Daudzpunkti -->
+                    <span th:if="${(i == 1 and currentPage > 3) or (i == totalPages - 2 and currentPage < totalPages - 4)}"
+                          style="padding:0 4px;color:var(--text-muted);align-self:center">…</span>
+                </th:block>
+ 
+                <!-- Nākamā lapa -->
+                <a th:href="@{/dashboard(page=${currentPage + 1})}"
+                   th:classappend="${currentPage == totalPages - 1} ? 'pagination-btn disabled' : 'pagination-btn'"
+                   class="pagination-btn">&#8594;</a>
+ 
+                <span class="pagination-info"
+                      th:text="'Lapa ' + (${currentPage + 1}) + ' no ' + ${totalPages}"></span>
             </div>
         </div>
     </div>

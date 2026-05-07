@@ -518,6 +518,53 @@ tr:hover td { background: #faf8f5; }
 .text-right { text-align: right; }
 .w-full { width: 100%; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+.pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 5px;
+    border: 1.5px solid var(--border);
+    background: white;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s;
+    font-family: 'Source Sans 3', sans-serif;
+    cursor: pointer;
+}
+.pagination-btn:hover:not(.disabled):not(.active) {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+.pagination-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    pointer-events: none;
+}
+.pagination-btn.disabled {
+    opacity: 0.35;
+    pointer-events: none;
+    cursor: default;
+}
+.pagination-info {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0.5rem;
+}
  
 @media (max-width: 768px) {
     .form-row, .grid-2 { grid-template-columns: 1fr; }

@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,18 +37,25 @@ public class PermitController {
     private UserService userService;
  
     @GetMapping("/dashboard")
-    public String dashboard(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+    public String dashboard(@AuthenticationPrincipal UserDetails userDetails, @RequestParam(value = "page", defaultValue = "0") int page,
+                            Model model) {
         MyUser user = userService.findByUsername(userDetails.getUsername());
-        List<Permit> permits = permitService.getUserPermits(user);
+        // Paginēts saraksts
+        Page<Permit> permitPage = permitService.getUserPermitsPaged(user, page);
         model.addAttribute("user", user);
-        model.addAttribute("permits", permits);
+        model.addAttribute("permits", permitPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", permitPage.getTotalPages());
+        model.addAttribute("totalElements", permitPage.getTotalElements());
         model.addAttribute("statuses", PermitStatus.values());
  
+        // Statistika — par VISIEM lietotāja pieteikumiem (ne tikai šo lapu)
         
-        long submitted = permits.stream().filter(p -> p.getStatus() == PermitStatus.IESNIEGTS).count();
-        long inReview = permits.stream().filter(p -> p.getStatus() == PermitStatus.IZSKATISANA).count();
-        long approved = permits.stream().filter(p -> p.getStatus() == PermitStatus.APSTIPRINATS).count();
-        long rejected = permits.stream().filter(p -> p.getStatus() == PermitStatus.NORAIDITS).count();
+        List<Permit> allPermits = permitService.getUserPermits(user);
+        long submitted = allPermits.stream().filter(p -> p.getStatus() == PermitStatus.IESNIEGTS).count();
+        long inReview = allPermits.stream().filter(p -> p.getStatus() == PermitStatus.IZSKATISANA).count();
+        long approved = allPermits.stream().filter(p -> p.getStatus() == PermitStatus.APSTIPRINATS).count();
+        long rejected = allPermits.stream().filter(p -> p.getStatus() == PermitStatus.NORAIDITS).count();
         model.addAttribute("countSubmitted", submitted);
         model.addAttribute("countInReview", inReview);
         model.addAttribute("countApproved", approved);

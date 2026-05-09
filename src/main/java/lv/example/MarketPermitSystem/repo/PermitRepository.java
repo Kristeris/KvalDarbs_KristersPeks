@@ -20,7 +20,11 @@ public interface PermitRepository extends JpaRepository<Permit, Long> {
     // Pagination admin skatam
     Page<Permit> findAllByOrderBySubmittedAtDesc(Pageable pageable);
 
-    // Bez pagination (saglabātas esošās metodes statistikai)
+    // Pagination admin skatam — filtrēts pēc lietotājvārda (daļēja atbilstība)
+    Page<Permit> findByUserUsernameContainingIgnoreCaseOrderBySubmittedAtDesc(
+            String username, Pageable pageable);
+
+    // Bez pagination (statistikai)
     List<Permit> findByUserOrderBySubmittedAtDesc(MyUser user);
     List<Permit> findAllByOrderBySubmittedAtDesc();
     List<Permit> findByStatus(PermitStatus status);

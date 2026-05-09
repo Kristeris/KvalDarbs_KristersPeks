@@ -13,13 +13,11 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -251,9 +249,13 @@ public class PermitService {
  
     
     //Atgriež vienu lapas pieteikumus admin skatam.
-    public Page<Permit> getAllPermitsPaged(int page) {
+    public Page<Permit> getAllPermitsPaged(int page, String searchUsername) {
         Pageable pageable = PageRequest.of(page, PAGE_SIZE);
-        return permitRepository.findAllByOrderBySubmittedAtDesc(pageable);
+        if (searchUsername == null || searchUsername.isBlank()) {
+            return permitRepository.findAllByOrderBySubmittedAtDesc(pageable);
+        }
+        return permitRepository.findByUserUsernameContainingIgnoreCaseOrderBySubmittedAtDesc(
+                        searchUsername.trim(), pageable);
     }
  
     // Esošās metodes (statistikai un citur)

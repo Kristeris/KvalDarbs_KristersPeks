@@ -34,13 +34,14 @@ public class AdminController {
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
  
     @GetMapping("/dashboard")
-    public String adminDashboard(@RequestParam(value = "page", defaultValue = "0") int page,Model model) {
+    public String adminDashboard(@RequestParam(value = "page", defaultValue = "0") int page,@RequestParam(value = "search", defaultValue = "") String search, Model model) {
         // Paginēts saraksts
-        Page<Permit> permitPage = permitService.getAllPermitsPaged(page);
+        Page<Permit> permitPage = permitService.getAllPermitsPaged(page, search);
         model.addAttribute("permits", permitPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", permitPage.getTotalPages());
         model.addAttribute("totalElements", permitPage.getTotalElements());
+        model.addAttribute("search", search);
  
         // Statistika — par VISIEM pieteikumiem
         model.addAttribute("totalCount", permitService.getAllPermits().size());
@@ -57,6 +58,7 @@ public class AdminController {
                            @RequestParam("status") String status,
                            @RequestParam(value = "adminComment", required = false) String adminComment,
                            @RequestParam(value = "page", defaultValue = "0") int page,
+                           @RequestParam(value = "search", defaultValue = "") String search,
                            RedirectAttributes redirectAttributes) {
         log.info("Admin maina pieteikuma #{} statusu uz '{}', komentārs: '{}'",
             id, status, adminComment);
@@ -67,6 +69,6 @@ public class AdminController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Kļūda: " + e.getMessage());
         }
-        return "redirect:/admin/dashboard?page=" + page;
+        return "redirect:/admin/dashboard?page=" + page + "&search=" + search;
     }
 }

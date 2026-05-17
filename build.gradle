@@ -44,7 +44,11 @@ dependencies {
  
 	// Testēšana
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	// H2 in-memory datubāze — nepieciešama @DataJpaTest testiem
+    testRuntimeOnly 'com.h2database:h2'
 }
  
 tasks.withType(JavaCompile).configureEach {
@@ -53,5 +57,12 @@ tasks.withType(JavaCompile).configureEach {
  
 tasks.named('test') {
 	useJUnitPlatform()
+	// Parādīt testu rezultātus konsolē
+    testLogging {
+        events "passed", "skipped", "failed"
+        showExceptions true
+        showCauses true
+        showStackTraces true
+    }
 }
  

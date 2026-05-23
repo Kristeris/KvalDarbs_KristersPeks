@@ -48,6 +48,118 @@
             gap: 0.75rem;
             justify-content: center;
         }
+        .edoc-panel {
+            background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e9 100%);
+            border: 1.5px solid #a5d6a7;
+            border-left: 5px solid var(--success);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .edoc-panel h4 {
+            font-family: 'Playfair Display', serif;
+            color: var(--success);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .edoc-panel p {
+            font-size: 13px;
+            color: #4a6b4a;
+            margin-bottom: 1rem;
+        }
+        .edoc-upload-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .edoc-file-box {
+            flex: 1;
+            min-width: 200px;
+            border: 2px dashed #a5d6a7;
+            border-radius: 6px;
+            background: white;
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: all 0.18s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #4a6b4a;
+            font-weight: 600;
+            min-height: 44px;
+        }
+        .edoc-file-box label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            margin: 0;
+            width: 100%;
+        }
+        .edoc-file-box:hover { background: #e8f5e9; border-color: var(--success); }
+        .edoc-file-box.has-file { border-style: solid; border-color: var(--success); background: #e8f5e9; }
+        .edoc-file-box input[type="file"] {
+            position: absolute; inset: 0;
+            opacity: 0; cursor: pointer; width: 100%; height: 100%;
+        }
+        .btn-send-edoc {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 10px 22px; background: var(--success); color: white;
+            border: none; border-radius: 6px; font-size: 14px; font-weight: 600;
+            cursor: pointer; font-family: 'Source Sans 3', sans-serif;
+            transition: background 0.18s; white-space: nowrap;
+        }
+        .btn-send-edoc:hover { background: #236b3f; }
+        .btn-send-edoc:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        .edoc-hint {
+            font-size: 12px;
+            color: #6b8f6b;
+            margin-top: 8px;
+        }
+        .alert-edoc-success {
+            background: #e8f5e9;
+            color: #2d6a3f;
+            border-left: 4px solid var(--success);
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 1.25rem;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .alert-edoc-error {
+            background: #ffebee;
+            color: #8b1a1a;
+            border-left: 4px solid var(--danger);
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 1.25rem;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .no-email-warning {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-left: 4px solid var(--warning);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #6b4e00;
+            margin-top: 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -75,6 +187,13 @@
 </nav>
  
 <div class="page-wrapper">
+
+    <div th:if="${edocSuccess}" class="alert-edoc-success">
+        &#10004; <span th:text="${edocSuccess}"></span>
+    </div>
+    <div th:if="${edocError}" class="alert-edoc-error">
+        &#9888; <span th:text="${edocError}"></span>
+    </div>
  
     <div class="page-header flex justify-between items-center">
         <div>
@@ -197,19 +316,17 @@
  
         <div style="display:flex;flex-direction:column;gap:1.5rem">
  
-            <!-- DOCUMENTS  -->
+            <!-- DOKUMENTI  -->
             <div class="card">
                 <div class="card-header"><h3>Pievienotie dokumenti</h3></div>
                 <div class="card-body">
                     <div th:if="${documentList.empty}" class="empty-state" style="padding:1.5rem">
-                        <div class="icon" style="font-size:2rem"></div>
                         <p>Nav pievienotu dokumentu</p>
                     </div>
                     <div th:if="${!documentList.empty}">
                         <div th:each="doc : ${documentList}"
                             style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#faf8f5;border-radius:6px;border:1px solid var(--border);margin-bottom:8px">
                             <div style="display:flex;align-items:center;gap:10px">
-                                <span style="font-size:1.5rem"></span>
                                 <div>
                                     <div style="font-weight:600;font-size:14px" th:text="${doc[0]}"></div>
                                     <div class="text-muted">Pievienots kopā ar pieteikumu</div>
@@ -224,7 +341,7 @@
                 </div>
             </div>
  
-            <!-- ADMIN COMMENT CARD -->
+            <!-- ADMIN KOMENTS -->
             <div class="card" th:if="${permit.adminComment != null and !permit.adminComment.isEmpty()}">
                 <div class="card-header">
                     <h3>Pašvaldības komentārs</h3>
@@ -239,40 +356,91 @@
         </div>
     </div>
  
-    <!-- ADMIN ACTION PANEL -->
-    <div th:if="${isAdmin}" class="admin-action-panel" style="margin-top:1.5rem">
-        <h4>Administratora darbības</h4>
-        <p class="text-muted" style="margin-bottom:1rem;font-size:13px">
-            Pēc statusa maiņas lietotājs automātiski saņems e-pasta paziņojumu.
-        </p>
-        <form th:action="@{/admin/permits/{id}/status(id=${permit.pId})}" method="post">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Jauns statuss</label>
-                    <select name="status" class="form-control">
-                        <option th:each="s : ${statuses}"
-                                th:value="${s.name()}"
-                                th:text="${s.displayName}"
-                                th:selected="${s == permit.status}"></option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Komentārs lietotājam</label>
-                    <input type="text" name="adminComment" class="form-control"
-                           th:value="${permit.adminComment}"
-                           placeholder="Piezīme, kas tiks nosūtīta e-pastā">
-                </div>
-            </div>
-            <div style="display:flex;gap:0.75rem">
-                <button type="submit" class="btn btn-primary"> Saglabāt un informēt lietotāju</button>
-                <a th:href="@{/admin/dashboard}" class="btn btn-outline">Atpakaļ uz sarakstu</a>
-            </div>
-        </form>
-    </div>
+    <!-- ADMIN DARBIBU PANELIS -->
+    <div th:if="${isAdmin}" style="margin-top:1.5rem;display:flex;flex-direction:column;gap:1.25rem">
  
+        <!-- Statusa maiņas panelis -->
+        <div class="admin-action-panel">
+            <h4> Statusa pārvaldība</h4>
+            <p class="text-muted" style="margin-bottom:1rem;font-size:13px">
+                Pēc statusa maiņas lietotājs automātiski saņems e-pasta paziņojumu.
+            </p>
+            <form th:action="@{/admin/permits/{id}/status(id=${permit.pId})}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Jauns statuss</label>
+                        <select name="status" class="form-control">
+                            <option th:each="s : ${statuses}"
+                                    th:value="${s.name()}"
+                                    th:text="${s.displayName}"
+                                    th:selected="${s == permit.status}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Komentārs lietotājam</label>
+                        <input type="text" name="adminComment" class="form-control"
+                               th:value="${permit.adminComment}"
+                               placeholder="Piezīme, kas tiks nosūtīta e-pastā">
+                    </div>
+                </div>
+                <div style="display:flex;gap:0.75rem">
+                    <button type="submit" class="btn btn-primary">&#10003; Saglabāt un informēt lietotāju</button>
+                    <a th:href="@{/admin/dashboard}" class="btn btn-outline">Atpakaļ uz sarakstu</a>
+                </div>
+            </form>
+        </div>
+ 
+        <!-- eDoc nosūtīšanas panelis -->
+        <div th:if="${permit.status.name() == 'APSTIPRINATS'}" class="edoc-panel">
+            <h4>&#128462; Nosūtīt parakstītu eDoc atļauju</h4>
+            <p>
+                Augšupielādējiet parakstītu elektronisko dokumentu (.edoc, .asice, .adoc vai .pdf)
+                un nosūtiet to tieši uz lietotāja e-pasta adresi
+                <strong th:if="${permit.user.email != null and !permit.user.email.isEmpty()}"
+                        th:text="'(' + ${permit.user.email} + ')'"></strong>.
+            </p>
+ 
+            <!-- Brīdinājums ja lietotājam nav e-pasta -->
+            <div th:if="${permit.user.email == null or permit.user.email.isEmpty()}"
+                 class="no-email-warning">
+                &#9888; Šim lietotājam nav norādīta e-pasta adrese - eDoc nevar nosūtīt automātiski.
+                Lūdzu, sazināties ar lietotāju <strong th:text="${permit.user.username}"></strong> citā veidā.
+            </div>
+ 
+            <!-- Augšupielādes forma -->
+            <form th:if="${permit.user.email != null and !permit.user.email.isEmpty()}"
+                  th:action="@{/admin/permits/{id}/send-edoc(id=${permit.pId})}"
+                  method="post"
+                  enctype="multipart/form-data"
+                  id="edocForm">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="edoc-upload-area">
+                    <input type="file" id="edocFile" name="edocFile"
+                               accept=".edoc,.asice,.adoc,.pdf" style="display:none">
+                    <div class="edoc-file-box" id="edocBox">
+                        <label for="edocFile" style="display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;margin:0">
+                            <span id="edocIcon">&#128462;</span>
+                            <span id="edocLabelText">Izvēlēties eDoc failu…</span>
+                        </label>
+                    </div>
+                    <button type="submit"
+                            id="edocSubmitBtn"
+                            class="btn-send-edoc"
+                            disabled>
+                        &#128231; Nosūtīt uz e-pastu
+                    </button>
+                </div>
+                <div class="edoc-hint">
+                    Atļautie formāti: .edoc, .asice, .adoc, .pdf · Maks. 10 MB
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
-<!-- DELETE CONFIRMATION -->
+
+<!-- DELETE -->
 <div id="deleteModal" class="modal-backdrop" th:if="${canDelete}"
      onclick="if(event.target===this) this.classList.remove('open')">
     <div class="modal">
@@ -280,8 +448,9 @@
         <h3>Dzēst pieteikumu?</h3>
         <p>
             Vai tiešām vēlaties dzēst pieteikumu
-            <strong th:text='"' + ${permit.title} + '"'></strong>?
-            Šo darbību nevar atcelt — pieteikums un visi pievienotie dokumenti tiks neatgriezeniski dzēsti.
+            <strong th:if="${permit.user.email != null and !permit.user.email.isEmpty()}"
+                th:text="|( ${permit.user.email} )|"></strong>
+            Šo darbību nevar atcelt - pieteikums un visi pievienotie dokumenti tiks neatgriezeniski dzēsti.
         </p>
         <div class="modal-actions">
             <button type="button" class="btn btn-outline"
@@ -295,6 +464,49 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.getElementById('edocFile');
+    if (!input) return;
+ 
+    input.addEventListener('change', function () {
+        var box   = document.getElementById('edocBox');
+        var icon  = document.getElementById('edocIcon');
+        var lbl   = document.getElementById('edocLabelText');
+        var btn   = document.getElementById('edocSubmitBtn');
 
+        if (input.files && input.files.length > 0) {
+            var file = input.files[0];
+            if (file.size > 10 * 1024 * 1024) {
+                icon.textContent = ' ';
+                lbl.textContent  = 'Fails pārāk liels! Maks. 10 MB';
+                box.classList.remove('has-file');
+                btn.disabled = true;
+                input.value = '';
+                return;
+            }
+            icon.textContent = ' ';
+            lbl.textContent  = file.name;
+            box.classList.add('has-file');
+            btn.disabled = false;
+        } else {
+            icon.textContent = ' ';
+            lbl.textContent  = 'Izvēlēties eDoc failu…';
+            box.classList.remove('has-file');
+            btn.disabled = true;
+        }
+    });
+ 
+    // Novērš dubultu iesniegšanu
+    var form = document.getElementById('edocForm');
+    if (form) {
+        form.addEventListener('submit', function () {
+            var btn = document.getElementById('edocSubmitBtn');
+            btn.disabled = true;
+            btn.textContent = ' Sūta…';
+        });
+    }
+});
+</script>
 </body>
 </html>

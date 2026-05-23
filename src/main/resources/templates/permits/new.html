@@ -6,6 +6,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jauns pieteikums - Tirdzniecības Atļauju Sistēma</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            background: #faf8f5;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+            min-height: 110px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .upload-zone:hover, .upload-zone.drag-over {
+            border-color: var(--primary);
+            background: #eef3f8;
+        }
+        .upload-zone.has-files {
+            border-color: var(--primary);
+            border-style: solid;
+            background: #eef3f8;
+        }
+        .upload-zone-label {
+            position: absolute;
+            inset: 0;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .upload-zone-icon { font-size: 2rem; margin-bottom: 8px; pointer-events: none; }
+        .upload-zone-text { font-size: 14px; color: var(--text-muted); pointer-events: none; }
+        .upload-zone-text strong { color: var(--primary); }
+ 
+        /* Failu saraksts zem zonas */
+        .file-list { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 6px; }
+        .file-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 12px; background: white;
+            border: 1px solid var(--border); border-radius: 6px; font-size: 13px;
+        }
+        .file-item-name { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--primary); }
+        .file-item-size { color: var(--text-muted); font-size: 12px; }
+        .file-remove {
+            background: none; border: none; cursor: pointer;
+            color: var(--danger); font-size: 16px; padding: 0 4px;
+            line-height: 1;
+        }
+        .upload-count {
+            margin-top: 6px; font-size: 12px; color: var(--primary);
+            font-weight: 600; display: none;
+        }
+    </style>
 </head>
 <body>
  
@@ -24,6 +82,7 @@
         <li sec:authorize="hasRole('ADMIN')"><a th:href="@{/admin/dashboard}">Administrācija</a></li>
         <li>
             <form th:action="@{/logout}" method="post" style="display:inline">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="btn-logout">Izrakstīties</button>
             </form>
         </li>
@@ -44,7 +103,7 @@
             <h3>Pieteikuma informācija</h3>
         </div>
         <div class="card-body">
-            <form th:action="@{/permits/new}" method="post" enctype="multipart/form-data">
+            <form th:action="@{/permits/new}" method="post" enctype="multipart/form-data"  id="permitForm">
  
                 <div class="form-group">
                     <label class="form-label">Pieteikuma nosaukums <span style="color:var(--danger)">*</span></label>
@@ -77,15 +136,21 @@
  
                 <div class="form-group">
                     <label class="form-label">Dokumenti (tirdzniecības vietas plāns, saskaņojumi, u.c.)</label>
-                    <div class="file-upload-area" id="dropZone" onclick="document.getElementById('documents').click()">
-                        <div class="file-upload-icon"></div>
-                        <div class="file-upload-text">
-                            <strong>Nospiediet, lai atlasītu failu</strong> vai velciet šeit<br>
-                            <span style="font-size:12px">PDF, DOC, DOCX, JPG, PNG - līdz 10 MB</span>
-                        </div>
-                        <div id="fileListDisplay" style="margin-top:10px;text-align:left"></div>
+                    <input type="file" id="documents" name="documents"
+                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple style="display:none">
+                    <div class="upload-zone" id="dropZone">
+                        <label for="documents" class="upload-zone-label">
+                            <div class="upload-zone-icon">&#128194;</div>
+                            <div class="upload-zone-text">
+                                <strong>Nospiediet, lai atlasītu failu</strong> vai velciet šeit<br>
+                                <span style="font-size:12px">PDF, DOC, DOCX, JPG, PNG - līdz 10 MB</span>
+                            </div>
+                        </label>
                     </div>
-                    <input type="file" id="documents" name="documents" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" multiple>
+ 
+                    <!-- Izvēlēto failu saraksts -->
+                    <div class="file-list" id="fileList"></div>
+                    <div class="upload-count" id="uploadCount"></div>
                 </div>
  
                 <div class="alert alert-info" style="margin-top:0.5rem">
@@ -102,6 +167,97 @@
         </div>
     </div>
 </div>
+ <script>
+document.addEventListener('DOMContentLoaded', function () {
+    var input    = document.getElementById('documents');
+    var dropZone = document.getElementById('dropZone');
+    var fileList = document.getElementById('fileList');
+    var countEl  = document.getElementById('uploadCount');
  
+    // Saglabājam izvēlētos failus šeit (jo input.files ir readonly)
+    var selectedFiles = [];
+ 
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+ 
+    function renderFileList() {
+        fileList.innerHTML = '';
+        if (selectedFiles.length === 0) {
+            dropZone.classList.remove('has-files');
+            countEl.style.display = 'none';
+            return;
+        }
+        dropZone.classList.add('has-files');
+        countEl.style.display = 'block';
+        countEl.textContent = ' Izvēlēti ' + selectedFiles.length + ' faili';
+ 
+        selectedFiles.forEach(function (file, idx) {
+            var item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML =
+                '<div class="file-item-name"> <span>' + file.name + '</span></div>' +
+                '<div style="display:flex;align-items:center;gap:8px">' +
+                '  <span class="file-item-size">' + formatSize(file.size) + '</span>' +
+                '  <button type="button" class="file-remove" data-idx="' + idx + '" title="Noņemt">✕</button>' +
+                '</div>';
+            fileList.appendChild(item);
+        });
+ 
+        // Noņemšanas podziņas
+        fileList.querySelectorAll('.file-remove').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                selectedFiles.splice(parseInt(btn.getAttribute('data-idx')), 1);
+                syncInputFiles();
+                renderFileList();
+            });
+        });
+    }
+ 
+    // FIX: Sinhronizē selectedFiles ar input.files izmantojot DataTransfer
+    function syncInputFiles() {
+        var dt = new DataTransfer();
+        selectedFiles.forEach(function (f) { dt.items.add(f); });
+        input.files = dt.files;
+    }
+ 
+    // FIX: Pievieno jaunus failus pie jau izvēlētajiem (neaizstāj!)
+    input.addEventListener('change', function () {
+        Array.from(input.files).forEach(function (file) {
+            if (file.size > 10 * 1024 * 1024) {
+                alert(file.name + ' ir pārāk liels (maks. 10 MB)');
+                return;
+            }
+            // Izvairies no dublikātiem pēc nosaukuma
+            var exists = selectedFiles.some(function (f) { return f.name === file.name; });
+            if (!exists) selectedFiles.push(file);
+        });
+        syncInputFiles();
+        renderFileList();
+    });
+ 
+    // Drag & drop
+    dropZone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', function () {
+        dropZone.classList.remove('drag-over');
+    });
+    dropZone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        Array.from(e.dataTransfer.files).forEach(function (file) {
+            if (file.size > 10 * 1024 * 1024) { alert(file.name + ' ir pārāk liels'); return; }
+            var exists = selectedFiles.some(function (f) { return f.name === file.name; });
+            if (!exists) selectedFiles.push(file);
+        });
+        syncInputFiles();
+        renderFileList();
+    });
+});
+</script>
 </body>
 </html>

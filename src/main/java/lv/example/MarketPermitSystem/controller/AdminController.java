@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.multipart.MultipartFile;
 
 import lv.example.MarketPermitSystem.model.Permit;
 import lv.example.MarketPermitSystem.model.enums.PermitStatus;
+import lv.example.MarketPermitSystem.service.EmailService;
 import lv.example.MarketPermitSystem.service.PermitService;
 import lv.example.MarketPermitSystem.service.UserService;
 
@@ -30,6 +32,9 @@ public class AdminController {
  
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private EmailService emailService;
     
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
  
@@ -70,5 +75,58 @@ public class AdminController {
             redirectAttributes.addFlashAttribute("error", "Kļūda: " + e.getMessage());
         }
         return "redirect:/admin/dashboard?page=" + page + "&search=" + search;
+    }
+    
+    @PostMapping("/permits/{id}/send-edoc")
+    public String sendEdoc(
+            @PathVariable("id") long id,
+            @RequestParam("edocFile") MultipartFile edocFile,
+            RedirectAttributes redirectAttributes) {
+ 
+        log.info("Admin augšupielādē eDoc pieteikumam #{}", id);
+ 
+        // Pārbaude — fails nav tukšs
+        if (edocFile == null || edocFile.isEmpty()) {
+            redirectAttributes.addFlashAttribute("edocError", "Lūdzu, izvēlieties eDoc failu!");
+            return "redirect:/permits/" + id;
+        }
+ 
+        // Pārbaude — tikai .edoc, .pdf, .adoc paplašinājumi
+        String filename = edocFile.getOriginalFilename() != null
+                ? edocFile.getOriginalFilename().toLowerCase()
+                : "";
+        if (!filename.endsWith(".edoc") && !filename.endsWith(".pdf")
+                && !filename.endsWith(".adoc") && !filename.endsWith(".asice")) {
+            redirectAttributes.addFlashAttribute("edocError",
+                "Atļautie failu formāti: .edoc, .asice, .adoc, .pdf");
+            return "redirect:/permits/" + id;
+        }
+ 
+        try {
+            Permit permit = permitService.getPermitById(id);
+ 
+            // Pārbaude — pieteikumam jābūt apstiprinātam
+            if (permit.getStatus() != PermitStatus.APSTIPRINATS) {
+                redirectAttributes.addFlashAttribute("edocError",
+                    "eDoc var nosūtīt tikai apstiprinātiem pieteikumiem!");
+                return "redirect:/permits/" + id;
+            }
+ 
+            emailService.sendEdocEmail(permit.getUser(), permit, edocFile);
+            log.info("eDoc veiksmīgi nosūtīts lietotājam '{}' par pieteikumu #{}",
+                    permit.getUser().getUsername(), id);
+            redirectAttributes.addFlashAttribute("edocSuccess",
+                "eDoc veiksmīgi nosūtīts uz " + permit.getUser().getEmail() + "!");
+ 
+        } catch (IllegalStateException e) {
+            // Lietotājam nav e-pasta
+            redirectAttributes.addFlashAttribute("edocError", e.getMessage());
+        } catch (Exception e) {
+            log.error("eDoc sūtīšana neizdevās pieteikumam #{}: {}", id, e.getMessage());
+            redirectAttributes.addFlashAttribute("edocError",
+                "Kļūda nosūtot eDoc: " + e.getMessage());
+        }
+ 
+        return "redirect:/permits/" + id;
     }
 }

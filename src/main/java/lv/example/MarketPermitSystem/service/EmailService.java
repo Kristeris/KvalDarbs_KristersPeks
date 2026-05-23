@@ -3,10 +3,15 @@ package lv.example.MarketPermitSystem.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lv.example.MarketPermitSystem.model.MyUser;
 import lv.example.MarketPermitSystem.model.Permit;
  
@@ -75,5 +80,53 @@ public class EmailService {
         body += "\nLūdzu, pieslēdzieties sistēmai, lai skatītu pilnu informāciju.\n\n" +
                 "Ar cieņu,\nVentspils valstspilsētas pašvaldība";
         sendEmail(user.getEmail(), subject, body);
+    }
+    
+    public void sendEdocEmail(MyUser user, Permit permit, MultipartFile edocFile)
+            throws MessagingException {
+ 
+        if (user.getEmail() == null || user.getEmail().isEmpty()) {
+            log.warn("Lietotājam '{}' nav e-pasta adreses — eDoc netika nosūtīts", user.getUsername());
+            throw new IllegalStateException(
+                "Lietotājam nav norādīta e-pasta adrese. eDoc nevar nosūtīt.");
+        }
+ 
+        MimeMessage mime = mailSender.createMimeMessage();
+        // true = multipart (pielikumiem)
+        MimeMessageHelper helper = new MimeMessageHelper(mime, true, "UTF-8");
+ 
+        helper.setFrom("kristers1906@gmail.com");
+        helper.setTo(user.getEmail());
+        helper.setSubject("Tirdzniecības atļauja apstiprināta - " + permit.getTitle());
+ 
+        String body =
+            "Labdien, " + user.getUsername() + "!\n\n" +
+            "Jūsu tirdzniecības atļaujas pieteikums ir apstiprināts un atļauja ir pievienota šim e-pastam.\n\n" +
+            "Pieteikuma informācija:\n" +
+            "• Nosaukums: " + permit.getTitle() + "\n" +
+            "• Tirdzniecības vieta: " + permit.getTradeLocation() + "\n" +
+            "• Periods: " + permit.getTradeStartDate() + " – " + permit.getTradeEndDate() + "\n\n" +
+            "Lūdzu, glabājiet šo dokumentu — tas apliecina Jūsu tiesības veikt tirdzniecību.\n\n" +
+            "Ar cieņu,\nVentspils valstspilsētas pašvaldība\n" +
+            "Ekonomikas un iepirkumu nodaļa\n" +
+            "Tālrunis: 63601191 | E-pasts: ekonomika@ventspils.lv";
+ 
+        helper.setText(body);
+ 
+        // Pievieno eDoc failu kā pielikumu
+        try {
+            helper.addAttachment(
+                edocFile.getOriginalFilename() != null
+                    ? edocFile.getOriginalFilename()
+                    : "atlauja.edoc",
+                new ByteArrayResource(edocFile.getBytes())
+            );
+        } catch (Exception e) {
+            throw new MessagingException("Neizdevās pievienot failu e-pastam: " + e.getMessage());
+        }
+ 
+        mailSender.send(mime);
+        log.info("eDoc e-pasts nosūtīts lietotājam '{}' uz '{}' par pieteikumu #{}",
+                user.getUsername(), user.getEmail(), permit.getPId());
     }
 }

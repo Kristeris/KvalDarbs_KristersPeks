@@ -3,6 +3,7 @@ package lv.example.MarketPermitSystem.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -20,6 +21,10 @@ public class EmailService {
  
     @Autowired
     private JavaMailSender mailSender;
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
  
     private void sendEmail(String to, String subject, String body) {
@@ -28,7 +33,7 @@ public class EmailService {
             message.setTo(to);
             message.setSubject(subject);
             message.setText(body);
-            message.setFrom("kristers1906@gmail.com");
+            message.setFrom(fromEmail);
             mailSender.send(message);
             log.info("E-pasts nosūtīts uz '{}': '{}'", to, subject);
         } catch (Exception e) {
@@ -95,7 +100,7 @@ public class EmailService {
         // true = multipart (pielikumiem)
         MimeMessageHelper helper = new MimeMessageHelper(mime, true, "UTF-8");
  
-        helper.setFrom("kristers1906@gmail.com");
+        helper.setFrom(fromEmail);
         helper.setTo(user.getEmail());
         helper.setSubject("Tirdzniecības atļauja apstiprināta - " + permit.getTitle());
  
